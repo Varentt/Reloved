@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:reloved/screens/add_product_screen.dart';
 import 'package:reloved/screens/home_screen.dart';
 import 'package:reloved/screens/order_screen.dart';
 import 'package:reloved/screens/profile_screen.dart';
 import 'package:reloved/utils/color_resources.dart';
+import 'package:reloved/screens/favorite_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -17,7 +17,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const AddProductScreen(),
+    const FavoriteScreen(),
     const OrderScreen(),
     const ProfileScreen(),
   ];
@@ -42,12 +42,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
-            label: 'Home',
+            label: 'Beranda',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_outlined),
-            activeIcon: Icon(Icons.add_box),
-            label: 'Jual',
+            icon: Icon(Icons.favorite_border),
+            activeIcon: Icon(Icons.favorite),
+            label: 'Favorit',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_outlined),

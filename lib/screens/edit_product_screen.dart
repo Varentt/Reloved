@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:reloved/utils/color_resources.dart';
 
-class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+class EditProductScreen extends StatefulWidget {
+  const EditProductScreen({super.key});
 
   @override
-  State<AddProductScreen> createState() => _AddProductScreenState();
+  State<EditProductScreen> createState() => _EditProductScreenState();
 }
 
-class _AddProductScreenState extends State<AddProductScreen> {
+class _EditProductScreenState extends State<EditProductScreen> {
   final _nameController = TextEditingController();
   final _normalPriceController = TextEditingController();
   final _priceController = TextEditingController();
@@ -58,7 +58,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
-          'Jual Barang Bekas',
+          'Edit Produk',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.primary,
@@ -269,7 +269,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                 ),
                 child: const Text(
-                  'Pasang Iklan Sekarang',
+                  'Simpan Perubahan',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

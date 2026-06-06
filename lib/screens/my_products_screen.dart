@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:reloved/utils/color_resources.dart';
+import 'package:reloved/screens/add_product_screen.dart';
+import 'package:reloved/screens/edit_product_screen.dart';
 
 class MyProductsScreen extends StatelessWidget {
   const MyProductsScreen({super.key});
@@ -104,7 +106,14 @@ class MyProductsScreen extends StatelessWidget {
                             // Action Buttons
                             Row(
                               children: [
-                                _buildSmallButton(Icons.edit_outlined, 'Edit', Colors.blue, () {}),
+                                _buildSmallButton(Icons.edit_outlined, 'Edit', Colors.blue, () {
+                                                                                                Navigator.push(
+                                                                                                  context,
+                                                                                                  MaterialPageRoute(
+                                                                                                    builder: (context) => const EditProductScreen(),
+                                                                                                  ),
+                                                                                                );
+                                                                                              }),
                                 const SizedBox(width: 8),
                                 _buildSmallButton(Icons.delete_outline, 'Hapus', Colors.red, () {}),
                                 const Spacer(),
@@ -122,8 +131,12 @@ class MyProductsScreen extends StatelessWidget {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // Navigasi ke halaman tambah produk (AddProductScreen)
-          Navigator.pushNamed(context, '/add-product'); // Nanti kita perbaiki navigasinya
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddProductScreen(),
+            ),
+          );
         },
         backgroundColor: AppColors.primary,
         icon: const Icon(Icons.add, color: Colors.white),
