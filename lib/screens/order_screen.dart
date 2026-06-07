@@ -33,19 +33,19 @@ class OrderScreen extends StatelessWidget {
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 18)),
-          bottom: TabBar(
+          bottom: const TabBar(
             indicatorColor: Colors.white,
             indicatorWeight: 3,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white60,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w700),
-            tabs: const [
+            labelStyle: TextStyle(fontWeight: FontWeight.w700),
+            tabs: [
               Tab(text: 'Pembelian'),
               Tab(text: 'Penjualan'),
             ],
           ),
         ),
-        body: TabBarView(
+        body: const TabBarView(
           children: [
             _OrderList(type: 'pembelian'),
             _OrderList(type: 'penjualan'),
@@ -108,14 +108,14 @@ class _OrderList extends StatelessWidget {
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Dikirim':
-        return Colors.blue;
       case 'Selesai':
-        return const Color(0xFF2e7d32);
+        return _primary;
+      case 'Dikirim':
+        return _primary;
       case 'Perlu Dikirim':
-        return const Color(0xFFe65100);
+        return _primary;
       case 'Menunggu Konfirmasi':
-        return Colors.orange;
+        return _primary;
       default:
         return _textSecondary;
     }
@@ -168,14 +168,11 @@ class _OrderList extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Header
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: _surface,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -186,13 +183,11 @@ class _OrderList extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: _textSecondary)),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border:
-                            Border.all(color: statusColor.withOpacity(0.3)),
+                        border: Border.all(color: statusColor.withOpacity(0.3)),
                       ),
                       child: Text(o['status']!,
                           style: TextStyle(
@@ -203,8 +198,6 @@ class _OrderList extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Produk info
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -252,12 +245,9 @@ class _OrderList extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Divider + tombol
               const Divider(height: 1, color: _surface),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -296,7 +286,7 @@ class _OrderList extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2e7d32),
+                          backgroundColor: const Color(0xFF2e7d32), // hijau tetap untuk konfirmasi
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(

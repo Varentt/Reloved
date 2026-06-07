@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:reloved/screens/home_screen.dart';
 import 'package:reloved/screens/order_screen.dart';
 import 'package:reloved/screens/profile_screen.dart';
-import 'package:reloved/utils/color_resources.dart';
 import 'package:reloved/screens/favorite_screen.dart';
+
+const _primary = Color(0xFF3B5B8A);
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -36,7 +37,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
+        selectedItemColor: _primary,
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(

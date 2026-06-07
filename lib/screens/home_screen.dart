@@ -3,6 +3,7 @@ import 'package:reloved/screens/product_detail_screen.dart';
 import 'package:reloved/screens/product_category_screen.dart';
 import 'package:reloved/screens/notification_screen.dart';
 import 'package:reloved/screens/cart_screen.dart';
+import 'package:reloved/screens/my_products_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -116,13 +117,13 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(child: _CategoryCard(
                                 icon: Icons.inventory_2_outlined,
                                 label: 'Produk\nReject',
-                                color: const Color(0xFFe65100),
+                                color: _primary,
                                 onTap: () => _goCategory(context, 'Produk Reject', 'REJECT'))),
                             const SizedBox(width: 10),
                             Expanded(child: _CategoryCard(
                                 icon: Icons.fastfood_outlined,
                                 label: 'Hampir\nExpired',
-                                color: const Color(0xFF2e7d32),
+                                color: _primary,
                                 onTap: () => _goCategory(context, 'Makanan Hampir Expired', 'EXPIRED'))),
                           ],
                         ),
@@ -222,13 +223,13 @@ class _BannerSliderState extends State<_BannerSlider> {
       'title': 'Produk Reject\nHarga Terjangkau',
       'sub': 'Kualitas oke, harga lebih hemat',
       'icon': Icons.inventory_2_outlined,
-      'colors': [Color(0xFFbf360c), Color(0xFFe65100)],
+      'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
     },
     {
       'title': 'Makanan Hampir\nExpired Murah!',
       'sub': 'Jangan buang makanan, hemat bersama',
       'icon': Icons.fastfood_outlined,
-      'colors': [Color(0xFF1b5e20), Color(0xFF2e7d32)],
+      'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
     },
   ];
 
@@ -272,11 +273,15 @@ class _BannerSliderState extends State<_BannerSlider> {
                           Text(b['sub'] as String,
                               style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11)),
                           const SizedBox(height: 10),
-                          Container(
+                          GestureDetector(
+                            onTap: () => Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => const MyProductsScreen())),
+                            child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(7)),
-                            child: Text('Jual Sekarang',
-                                style: TextStyle(color: colors[1], fontWeight: FontWeight.w700, fontSize: 11)),
+                            decoration: BoxDecoration(color: const Color(0xFF3B8AB1), borderRadius: BorderRadius.circular(7)),
+                            child: const Text('Jual Sekarang',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+                          ),
                           ),
                         ],
                       ),

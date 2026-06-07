@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reloved/screens/checkout_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -19,16 +20,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFavorite = false;
 
-  Color get _badgeColor {
-    switch (widget.product['badge']) {
-      case 'REJECT':
-        return const Color(0xFFe65100);
-      case 'EXPIRED':
-        return const Color(0xFF2e7d32);
-      default:
-        return _primary;
-    }
-  }
+  Color get _badgeColor => _primary; // semua kategori biru
 
   String get _discountLabel {
     try {
@@ -87,17 +79,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ),
                 actions: [
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.white.withOpacity(0.9),
-                      child: IconButton(
-                        icon: const Icon(Icons.share_outlined,
-                            color: _textPrimary, size: 18),
-                        onPressed: () {},
-                      ),
-                    ),
-                  ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
                     child: CircleAvatar(
@@ -237,19 +218,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ],
                                 ),
                               ),
-                              OutlinedButton(
-                                onPressed: () {},
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: _primary),
-                                  foregroundColor: _primary,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(9)),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 8),
-                                ),
-                                child: const Text('Lihat Toko',
-                                    style: TextStyle(fontSize: 12)),
-                              ),
+
                             ],
                           ),
                         ),
@@ -303,7 +272,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CheckoutScreen(product: widget.product),
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,

@@ -60,17 +60,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     );
   }
 
-  Color _badgeColor(String badge) {
-    switch (badge) {
-      case 'REJECT':
-        return const Color(0xFFe65100);
-      case 'EXPIRED':
-        return const Color(0xFF2e7d32);
-      default:
-        return _primary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,11 +87,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           ? _EmptyState()
           : Column(
               children: [
-                // Count bar
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   color: Colors.white,
                   child: Text(
                     '${_favorites.length} produk tersimpan',
@@ -139,7 +126,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                           ),
                           child: Row(
                             children: [
-                              // Gambar placeholder
                               Container(
                                 width: 90,
                                 height: 90,
@@ -161,9 +147,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: _badgeColor(p['badge']!),
-                                          borderRadius:
-                                              BorderRadius.circular(5),
+                                          color: _primary, // semua badge biru
+                                          borderRadius: BorderRadius.circular(5),
                                         ),
                                         child: Text(p['badge']!,
                                             style: const TextStyle(
@@ -175,14 +160,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                   ],
                                 ),
                               ),
-                              // Info
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 14, vertical: 12),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(p['name']!,
                                           maxLines: 2,
@@ -194,8 +177,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                       const SizedBox(height: 4),
                                       Text(p['normalPrice']!,
                                           style: const TextStyle(
-                                              decoration:
-                                                  TextDecoration.lineThrough,
+                                              decoration: TextDecoration.lineThrough,
                                               color: _textSecondary,
                                               fontSize: 11)),
                                       Text(p['price']!,
@@ -206,10 +188,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          const Icon(
-                                              Icons.location_on_outlined,
-                                              size: 11,
-                                              color: _textSecondary),
+                                          const Icon(Icons.location_on_outlined,
+                                              size: 11, color: _textSecondary),
                                           const SizedBox(width: 2),
                                           Text(p['location']!,
                                               style: const TextStyle(
@@ -221,7 +201,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                   ),
                                 ),
                               ),
-                              // Hapus favorit
                               Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: GestureDetector(

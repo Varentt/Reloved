@@ -127,8 +127,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                 const padding = 10.0;
                 const spacing = 8.0;
                 final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
-                // Gambar persegi = cardWidth, info di bawah ~60px
-                final cardHeight = cardWidth + 60.0;
+                // Gambar persegi = cardWidth, info di bawah ~80px
+                final cardHeight = cardWidth + 82.0;
                 final ratio = cardWidth / cardHeight;
 
                 return GridView.builder(
@@ -215,33 +215,33 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                               ),
                             ),
 
-                            // Info produk — fixed 60px
+                            // Info produk — fixed 80px
                             SizedBox(
-                              height: 60,
+                              height: 80,
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(5, 4, 5, 4),
+                                padding: const EdgeInsets.fromLTRB(6, 5, 6, 5),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(p['name']!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 9, color: _textPrimary, height: 1.2)),
+                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _textPrimary, height: 1.2)),
                                     Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(p['normalPrice']!,
-                                            style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 8)),
+                                            style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 9)),
                                         Text(p['price']!,
-                                            style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 10)),
+                                            style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 11)),
                                       ],
                                     ),
                                     Row(
                                       children: [
-                                        const Icon(Icons.location_on_outlined, size: 7, color: _textSecondary),
+                                        const Icon(Icons.location_on_outlined, size: 8, color: _textSecondary),
                                         const SizedBox(width: 1),
                                         Expanded(
                                           child: Text(p['loc']!, overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(fontSize: 8, color: _textSecondary)),
+                                              style: const TextStyle(fontSize: 9, color: _textSecondary)),
                                         ),
                                       ],
                                     ),

@@ -1,24 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:reloved/utils/color_resources.dart';
 import 'package:reloved/screens/add_product_screen.dart';
 import 'package:reloved/screens/edit_product_screen.dart';
+
+const _primary = Color(0xFF3B5B8A);
+const _primaryDark = Color(0xFF2e4a73);
+const _accent = Color(0xFFD0E2F2);
+const _surface = Color(0xFFF0F4F8);
+const _textPrimary = Color(0xFF1a2535);
+const _textSecondary = Color(0xFF7a8fa6);
 
 class MyProductsScreen extends StatelessWidget {
   const MyProductsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Data bohongan produk milik user
     final myProducts = [
-      {'name': 'Kemeja Flanel Uniqlo', 'price': 'Rp 85.000', 'status': 'Aktif', 'views': '124'},
-      {'name': 'Sepatu Converse Bekas', 'price': 'Rp 200.000', 'status': 'Terjual', 'views': '350'},
+      {'name': 'Kemeja Flanel Uniqlo', 'price': 'Rp85.000', 'status': 'Aktif', 'views': '124'},
+      {'name': 'Sepatu Converse Bekas', 'price': 'Rp200.000', 'status': 'Terjual', 'views': '350'},
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: _surface,
       appBar: AppBar(
-        title: const Text('Produk Saya', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primary,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primaryDark, _primary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: _primary,
+        title: const Text('Produk Saya',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: myProducts.isEmpty
@@ -26,9 +42,20 @@ class MyProductsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: _accent.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.inventory_2_outlined, size: 48, color: _primary),
+                  ),
                   const SizedBox(height: 16),
-                  const Text('Anda belum memiliki produk'),
+                  const Text('Belum ada produk',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textPrimary)),
+                  const SizedBox(height: 6),
+                  const Text('Tambah produk pertamamu sekarang!',
+                      style: TextStyle(color: _textSecondary, fontSize: 13)),
                 ],
               ),
             )
@@ -40,29 +67,27 @@ class MyProductsScreen extends StatelessWidget {
                 final bool isSold = product['status'] == 'Terjual';
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
+                  padding: const EdgeInsets.all(14),
                   child: Row(
                     children: [
-                      // Image Placeholder
                       Container(
                         height: 80,
                         width: 80,
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(8),
+                          color: _accent.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.image_outlined, color: Colors.grey),
+                        child: const Icon(Icons.image_outlined, color: _textSecondary),
                       ),
-                      const SizedBox(width: 16),
-                      // Info
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,52 +98,54 @@ class MyProductsScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: isSold ? Colors.grey.shade200 : AppColors.primaryLight.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(4),
+                                    color: isSold ? _surface : _accent.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(5),
                                   ),
                                   child: Text(
                                     product['status']!,
                                     style: TextStyle(
                                       fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSold ? Colors.grey : AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      color: isSold ? _textSecondary : _primary,
                                     ),
                                   ),
                                 ),
-                                Text(
-                                  '${product['views']} Dilihat',
-                                  style: const TextStyle(fontSize: 10, color: Colors.grey),
-                                ),
+                                Text('${product['views']} Dilihat',
+                                    style: const TextStyle(fontSize: 10, color: _textSecondary)),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              product['name']!,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              product['price']!,
-                              style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            // Action Buttons
+                            const SizedBox(height: 6),
+                            Text(product['name']!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                            Text(product['price']!,
+                                style: const TextStyle(
+                                    color: _primary, fontWeight: FontWeight.w800, fontSize: 13)),
+                            const SizedBox(height: 10),
                             Row(
                               children: [
-                                _buildSmallButton(Icons.edit_outlined, 'Edit', Colors.blue, () {
-                                                                                                Navigator.push(
-                                                                                                  context,
-                                                                                                  MaterialPageRoute(
-                                                                                                    builder: (context) => const EditProductScreen(),
-                                                                                                  ),
-                                                                                                );
-                                                                                              }),
+                                _SmallButton(
+                                  icon: Icons.edit_outlined,
+                                  label: 'Edit',
+                                  onTap: () => Navigator.push(context,
+                                      MaterialPageRoute(builder: (_) => const EditProductScreen())),
+                                ),
                                 const SizedBox(width: 8),
-                                _buildSmallButton(Icons.delete_outline, 'Hapus', Colors.red, () {}),
+                                _SmallButton(
+                                  icon: Icons.delete_outline,
+                                  label: 'Hapus',
+                                  onTap: () {},
+                                  isDestructive: true,
+                                ),
                                 const Spacer(),
                                 if (!isSold)
-                                  _buildSmallButton(Icons.check_circle_outline, 'Tandai Terjual', Colors.green, () {}),
+                                  _SmallButton(
+                                    icon: Icons.check_circle_outline,
+                                    label: 'Tandai Terjual',
+                                    onTap: () {},
+                                  ),
                               ],
                             ),
                           ],
@@ -130,35 +157,44 @@ class MyProductsScreen extends StatelessWidget {
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddProductScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primary,
+        onPressed: () => Navigator.push(
+            context, MaterialPageRoute(builder: (_) => const AddProductScreen())),
+        backgroundColor: _primary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Tambah Baru', style: TextStyle(color: Colors.white)),
       ),
     );
   }
+}
 
-  Widget _buildSmallButton(IconData icon, String label, Color color, VoidCallback onTap) {
+class _SmallButton extends StatelessWidget {
+  const _SmallButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? Colors.red : _primary;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          border: Border.all(color: color.withOpacity(0.5)),
+          border: Border.all(color: color.withOpacity(0.4)),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: color),
+            Icon(icon, size: 13, color: color),
             const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 10, color: color)),
+            Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

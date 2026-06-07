@@ -19,7 +19,6 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Header ──
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -27,8 +26,7 @@ class ProfileScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(32)),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
               ),
               child: SafeArea(
                 bottom: false,
@@ -90,7 +88,6 @@ class ProfileScreen extends StatelessWidget {
                                     style: TextStyle(
                                         color: Colors.white70, fontSize: 13)),
                                 const SizedBox(height: 10),
-                                // Stats row
                                 Row(
                                   children: [
                                     _StatBadge(label: 'Pembelian', value: '12'),
@@ -113,7 +110,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ── Aktivitas Pembeli ──
             _SectionHeader(label: 'Aktivitas Pembeli'),
             _MenuItem(
               icon: Icons.shopping_bag_outlined,
@@ -130,7 +126,7 @@ class ProfileScreen extends StatelessWidget {
             _MenuItem(
               icon: Icons.favorite_border,
               label: 'Favorit Saya',
-              iconColor: Colors.red,
+              iconColor: _primary, // diganti biru
               onTap: () {},
             ),
             _MenuItem(
@@ -142,7 +138,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Menu Penjual ──
             _SectionHeader(label: 'Menu Penjual'),
             _MenuItem(
               icon: Icons.inventory_2_outlined,
@@ -150,14 +145,13 @@ class ProfileScreen extends StatelessWidget {
               iconColor: _primary,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const MyProductsScreen()),
+                MaterialPageRoute(builder: (_) => const MyProductsScreen()),
               ),
             ),
             _MenuItem(
               icon: Icons.add_box_outlined,
               label: 'Jual Produk',
-              iconColor: const Color(0xFF2e7d32),
+              iconColor: _primary, // diganti biru
               badge: 'Baru',
               onTap: () {},
             ),
@@ -170,7 +164,6 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Lainnya ──
             _SectionHeader(label: 'Lainnya'),
             _MenuItem(
               icon: Icons.settings_outlined,
@@ -211,8 +204,7 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal',
-                style: TextStyle(color: _primary)),
+            child: const Text('Batal', style: TextStyle(color: _primary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -227,8 +219,7 @@ class ProfileScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Keluar',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -257,8 +248,7 @@ class _StatBadge extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                   fontSize: 14)),
           Text(label,
-              style:
-                  const TextStyle(color: Colors.white70, fontSize: 9)),
+              style: const TextStyle(color: Colors.white70, fontSize: 9)),
         ],
       ),
     );
@@ -319,8 +309,7 @@ class _MenuItem extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -339,10 +328,9 @@ class _MenuItem extends StatelessWidget {
           children: [
             if (badge != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2e7d32),
+                  color: _primary, // badge biru
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(badge!,
