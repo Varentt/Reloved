@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:reloved/screens/my_products_screen.dart';
 import 'package:reloved/screens/login_screen.dart';
+import 'package:reloved/screens/riwayat_transaksi_screen.dart';
+import 'package:reloved/screens/daftar_alamat_screen.dart';
+import 'package:reloved/screens/statistik_penjualan_screen.dart';
+import 'package:reloved/screens/pengaturan_akun_screen.dart';
+import 'package:reloved/screens/pusat_bantuan_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -19,6 +24,7 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // ── Header Profil ──
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -26,7 +32,8 @@ class ProfileScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(32)),
               ),
               child: SafeArea(
                 bottom: false,
@@ -43,7 +50,12 @@ class ProfileScreen extends StatelessWidget {
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800)),
                           GestureDetector(
-                            onTap: () {},
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const PengaturanAkunScreen()),
+                            ),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -93,8 +105,6 @@ class ProfileScreen extends StatelessWidget {
                                     _StatBadge(label: 'Pembelian', value: '12'),
                                     const SizedBox(width: 10),
                                     _StatBadge(label: 'Penjualan', value: '5'),
-                                    const SizedBox(width: 10),
-                                    _StatBadge(label: 'Favorit', value: '3'),
                                   ],
                                 ),
                               ],
@@ -110,34 +120,31 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            // ── Aktivitas Pembeli ──
             _SectionHeader(label: 'Aktivitas Pembeli'),
-            _MenuItem(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Pesanan Saya',
-              iconColor: _primary,
-              onTap: () {},
-            ),
             _MenuItem(
               icon: Icons.history,
               label: 'Riwayat Transaksi',
               iconColor: _primary,
-              onTap: () {},
-            ),
-            _MenuItem(
-              icon: Icons.favorite_border,
-              label: 'Favorit Saya',
-              iconColor: _primary, // diganti biru
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const RiwayatTransaksiScreen()),
+              ),
             ),
             _MenuItem(
               icon: Icons.location_on_outlined,
               label: 'Daftar Alamat',
               iconColor: _primary,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DaftarAlamatScreen()),
+              ),
             ),
 
             const SizedBox(height: 16),
 
+            // ── Menu Penjual ──
             _SectionHeader(label: 'Menu Penjual'),
             _MenuItem(
               icon: Icons.inventory_2_outlined,
@@ -149,33 +156,38 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             _MenuItem(
-              icon: Icons.add_box_outlined,
-              label: 'Jual Produk',
-              iconColor: _primary, // diganti biru
-              badge: 'Baru',
-              onTap: () {},
-            ),
-            _MenuItem(
               icon: Icons.analytics_outlined,
               label: 'Statistik Penjualan',
               iconColor: _primary,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const StatistikPenjualanScreen()),
+              ),
             ),
 
             const SizedBox(height: 16),
 
+            // ── Lainnya ──
             _SectionHeader(label: 'Lainnya'),
             _MenuItem(
               icon: Icons.settings_outlined,
               label: 'Pengaturan Akun',
               iconColor: _textSecondary,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const PengaturanAkunScreen()),
+              ),
             ),
             _MenuItem(
               icon: Icons.help_outline,
               label: 'Pusat Bantuan',
               iconColor: _textSecondary,
-              onTap: () {},
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PusatBantuanScreen()),
+              ),
             ),
             _MenuItem(
               icon: Icons.logout,
@@ -197,7 +209,8 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Keluar',
             style: TextStyle(fontWeight: FontWeight.w800)),
         content: const Text('Yakin ingin keluar dari akun?'),
@@ -219,13 +232,16 @@ class ProfileScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
+            child: const Text('Keluar',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 }
+
+// ── Reusable widgets ──
 
 class _StatBadge extends StatelessWidget {
   const _StatBadge({required this.label, required this.value});
@@ -309,7 +325,8 @@ class _MenuItem extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -328,9 +345,10 @@ class _MenuItem extends StatelessWidget {
           children: [
             if (badge != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _primary, // badge biru
+                  color: _primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(badge!,

@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:reloved/utils/color_resources.dart';
+
+const _primary = Color(0xFF3B5B8A);
+const _primaryDark = Color(0xFF2e4a73);
+const _accent = Color(0xFFD0E2F2);
+const _surface = Color(0xFFF0F4F8);
+const _textPrimary = Color(0xFF1a2535);
+const _textSecondary = Color(0xFF7a8fa6);
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -15,21 +21,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
 
-  String? _selectedType;
-
-  final List<String> _productTypes = [
-    'Pakaian',
-    'Elektronik',
-    'Makanan',
-    'Aksesoris',
-    'Peralatan Rumah Tangga',
-    'Lainnya',
-  ];
   String? _selectedCategory;
   String? _selectedCondition;
-
   DateTime? _expiredDate;
-
   final List<String> _categories = [
     'Barang Second',
     'Produk Reject',
@@ -55,226 +49,206 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Jual Barang Bekas',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.primary,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+      backgroundColor: _surface,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Upload Foto Placeholder
-            const Text(
-              'Foto Produk',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () {
-                // TODO: Implementasi ambil gambar dari galeri/kamera nanti
-              },
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.grey.shade300,
-                    style: BorderStyle.solid,
-                  ),
+            // ── AppBar dengan gradien ──
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_primaryDark, _primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              ),
+              padding: const EdgeInsets.fromLTRB(4, 12, 16, 12),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    'Tambah Produk',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Body ──
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.add_a_photo_outlined,
-                      size: 40,
-                      color: AppColors.primary,
+
+                    // Upload Foto
+                    _buildLabel('Foto Produk'),
+                    GestureDetector(
+                      onTap: () {
+                        // TODO: Implementasi ambil gambar
+                      },
+                      child: Container(
+                        height: 150,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: _accent.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _accent),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo_outlined, size: 40, color: _primary),
+                            SizedBox(height: 8),
+                            Text('Tambah Foto', style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Tambah Foto',
-                      style: TextStyle(color: AppColors.primary),
+
+                    const SizedBox(height: 20),
+
+                    // Nama Barang
+                    _buildLabel('Nama Barang'),
+                    _buildTextField(_nameController, 'Contoh: Sepatu Sneaker Nike'),
+
+                    const SizedBox(height: 14),
+
+                    // Harga Normal
+                    _buildLabel('Harga Normal (Rp)'),
+                    _buildTextField(_normalPriceController, 'Contoh: 250000', isNumber: true),
+
+                    const SizedBox(height: 14),
+
+                    // Harga Jual
+                    _buildLabel('Harga Jual (Rp)'),
+                    _buildTextField(_priceController, 'Contoh: 150000', isNumber: true),
+
+                    const SizedBox(height: 14),
+
+                    // Kategori
+                    _buildLabel('Kategori'),
+                    _buildDropdown(
+                      value: _selectedCategory,
+                      hint: 'Pilih Kategori',
+                      items: _categories,
+                      onChanged: (val) => setState(() => _selectedCategory = val),
                     ),
+
+                    const SizedBox(height: 14),
+
+                    // Kondisi
+                    _buildLabel('Kondisi'),
+                    _buildDropdown(
+                      value: _selectedCondition,
+                      hint: 'Pilih Kondisi',
+                      items: _conditions,
+                      onChanged: (val) => setState(() => _selectedCondition = val),
+                    ),
+
+                    // Tanggal Kedaluwarsa (hanya muncul jika kategori Makanan)
+                    if (_selectedCategory == 'Makanan Hampir Expired') ...[
+                      const SizedBox(height: 14),
+                      _buildLabel('Tanggal Kedaluwarsa'),
+                      InkWell(
+                        onTap: () async {
+                          final pickedDate = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2035),
+                            builder: (context, child) => Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(primary: _primary),
+                              ),
+                              child: child!,
+                            ),
+                          );
+                          if (pickedDate != null) {
+                            setState(() => _expiredDate = pickedDate);
+                          }
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: _accent),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
+                              const SizedBox(width: 10),
+                              Text(
+                                _expiredDate == null
+                                    ? 'Pilih Tanggal Kedaluwarsa'
+                                    : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
+                                style: TextStyle(
+                                  color: _expiredDate == null ? _textSecondary : _textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 14),
+
+                    // Lokasi
+                    _buildLabel('Lokasi'),
+                    _buildTextField(_locationController, 'Contoh: Malang, Jawa Timur'),
+
+                    const SizedBox(height: 14),
+
+                    // Deskripsi
+                    _buildLabel('Deskripsi'),
+                    _buildTextField(
+                      _descriptionController,
+                      'Ceritakan detail barang anda...',
+                      maxLines: 4,
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // Tombol Submit
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // TODO: Simpan ke Firestore
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Produk berhasil ditambahkan!')),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Pasang Iklan Sekarang',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Nama Barang
-            _buildLabel('Nama Barang'),
-            TextField(
-              controller: _nameController,
-              decoration: _buildInputDecoration('Contoh: Sepatu Sneaker Nike'),
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildLabel('Harga Normal (Rp)'),
-            TextField(
-              controller: _normalPriceController,
-              keyboardType: TextInputType.number,
-              decoration: _buildInputDecoration(
-                'Contoh: 250000',
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            // Harga
-            _buildLabel('Harga Jual (Rp)'),
-            TextField(
-              controller: _priceController,
-              keyboardType: TextInputType.number,
-              decoration: _buildInputDecoration('Contoh: 150000'),
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildLabel('Jenis Produk'),
-
-            DropdownButtonFormField<String>(
-              value: _selectedType,
-              decoration: _buildInputDecoration(
-                'Pilih Jenis Produk',
-              ),
-              items: _productTypes.map((type) {
-                return DropdownMenuItem(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedType = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // Kategori Dropdown
-            _buildLabel('Kategori'),
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: _buildInputDecoration('Pilih Kategori'),
-              items: _categories
-                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Kondisi Dropdown
-            _buildLabel('Kondisi'),
-            DropdownButtonFormField<String>(
-              value: _selectedCondition,
-              decoration: _buildInputDecoration('Pilih Kondisi'),
-              items: _conditions
-                  .map((con) => DropdownMenuItem(value: con, child: Text(con)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCondition = val),
-            ),
-
-            const SizedBox(height: 16),
-
-            if (_selectedCategory == 'Makanan Hampir Expired') ...[
-              const SizedBox(height: 16),
-
-              _buildLabel('Tanggal Kedaluwarsa'),
-
-              InkWell(
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2035),
-                  );
-
-                  if (pickedDate != null) {
-                    setState(() {
-                      _expiredDate = pickedDate;
-                    });
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _expiredDate == null
-                        ? 'Pilih Tanggal Kedaluwarsa'
-                        : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
-                  ),
-                ),
-              ),
-            ],
-            // Lokasi
-            _buildLabel('Lokasi'),
-            TextField(
-              controller: _locationController,
-              decoration: _buildInputDecoration('Contoh: Malang, Jawa Timur'),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Deskripsi
-            _buildLabel('Deskripsi'),
-            TextField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: _buildInputDecoration(
-                'Ceritakan detail barang anda...',
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Submit Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Simpan ke Firestore di Fase 4
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Produk anda berhasil diiklankan!'),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Pasang Iklan Sekarang',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -283,20 +257,72 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary),
+      ),
     );
   }
 
-  InputDecoration _buildInputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+  Widget _buildTextField(TextEditingController controller, String hint,
+      {bool isNumber = false, int maxLines = 1}) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      maxLines: maxLines,
+      style: const TextStyle(fontSize: 14, color: _textPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _accent),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _accent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _primary, width: 1.5),
+        ),
       ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required String? value,
+    required String hint,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _accent),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: _accent),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _primary, width: 1.5),
+        ),
+      ),
+      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 14, color: _textPrimary)))).toList(),
+      onChanged: onChanged,
     );
   }
 }

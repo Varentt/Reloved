@@ -4,6 +4,7 @@ import 'package:reloved/screens/product_category_screen.dart';
 import 'package:reloved/screens/notification_screen.dart';
 import 'package:reloved/screens/cart_screen.dart';
 import 'package:reloved/screens/my_products_screen.dart';
+import 'package:reloved/screens/favorite_screen.dart'; // ← tambah import
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -55,6 +56,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Text('Reloved',
                           style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                       const Spacer(),
+                      // ── PERUBAHAN 1: tambah ikon favorit di sini ──
+                      _topIconBtn(Icons.favorite_border, () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteScreen()));
+                      }),
+                      const SizedBox(width: 8),
                       _topIconBtn(Icons.notifications_none_outlined, () {
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationScreen()));
                       }),
@@ -136,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textPrimary)),
                       ),
 
-                      // Grid 4 kolom dengan gambar persegi
+                      // Grid
                       LayoutBuilder(
                         builder: (context, constraints) {
                           const crossAxisCount = 4;
@@ -277,11 +283,11 @@ class _BannerSliderState extends State<_BannerSlider> {
                             onTap: () => Navigator.push(context,
                                 MaterialPageRoute(builder: (_) => const MyProductsScreen())),
                             child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(color: const Color(0xFF3B8AB1), borderRadius: BorderRadius.circular(7)),
-                            child: const Text('Jual Sekarang',
-                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
-                          ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(color: const Color(0xFF3B8AB1), borderRadius: BorderRadius.circular(7)),
+                              child: const Text('Jual Sekarang',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+                            ),
                           ),
                         ],
                       ),
@@ -354,7 +360,7 @@ class _ProductCard extends StatelessWidget {
   final double cardWidth;
   final VoidCallback onTap;
 
-  Color get _badgeColor => _primary; // semua badge biru
+  Color get _badgeColor => _primary;
 
   @override
   Widget build(BuildContext context) {
@@ -369,7 +375,6 @@ class _ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar persegi
             SizedBox(
               width: cardWidth,
               height: cardWidth,
@@ -395,19 +400,21 @@ class _ProductCard extends StatelessWidget {
                           style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w800)),
                     ),
                   ),
+                  // ── PERUBAHAN 2: ikon hati non-interaktif (IgnorePointer) ──
                   Positioned(
                     top: 3, right: 3,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), shape: BoxShape.circle),
-                      child: const Icon(Icons.favorite_border, size: 9, color: Colors.grey),
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), shape: BoxShape.circle),
+                        child: const Icon(Icons.favorite_border, size: 9, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Info fixed 60px
             SizedBox(
               height: 60,
               child: Padding(

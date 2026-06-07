@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reloved/screens/order_detail_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -56,69 +57,200 @@ class OrderScreen extends StatelessWidget {
   }
 }
 
-class _OrderList extends StatelessWidget {
+class _OrderList extends StatefulWidget {
   const _OrderList({required this.type});
   final String type;
 
-  List<Map<String, String>> get _orders => type == 'pembelian'
-      ? [
-          {
-            'inv': 'INV-2026001',
-            'name': 'Kemeja Flanel Uniqlo',
-            'price': 'Rp85.000',
-            'status': 'Dikirim',
-            'date': '24 Mei 2026',
-            'seller': 'Reloved Store',
-          },
-          {
-            'inv': 'INV-2026002',
-            'name': 'Buku Harry Potter',
-            'price': 'Rp45.000',
-            'status': 'Selesai',
-            'date': '20 Mei 2026',
-            'seller': 'Toko Buku Lama',
-          },
-          {
-            'inv': 'INV-2026003',
-            'name': 'Roti Sobek',
-            'price': 'Rp5.000',
-            'status': 'Menunggu Konfirmasi',
-            'date': '25 Mei 2026',
-            'seller': 'Mega Store',
-          },
-        ]
-      : [
-          {
-            'inv': 'INV-2026004',
-            'name': 'Kamera Analog Canon',
-            'price': 'Rp450.000',
-            'status': 'Perlu Dikirim',
-            'date': '25 Mei 2026',
-            'buyer': 'Budi S.',
-          },
-          {
-            'inv': 'INV-2026005',
-            'name': 'Sepatu Vans Second',
-            'price': 'Rp150.000',
-            'status': 'Selesai',
-            'date': '18 Mei 2026',
-            'buyer': 'Sari D.',
-          },
-        ];
+  @override
+  State<_OrderList> createState() => _OrderListState();
+}
+
+class _OrderListState extends State<_OrderList> {
+  late List<Map<String, String>> _orders;
+
+  @override
+  void initState() {
+    super.initState();
+    _orders = widget.type == 'pembelian'
+        ? [
+            {
+              'inv': 'INV-2026001',
+              'name': 'Kemeja Flanel Uniqlo',
+              'price': 'Rp85.000',
+              'status': 'Dikirim',
+              'date': '24 Mei 2026',
+              'seller': 'Reloved Store',
+            },
+            {
+              'inv': 'INV-2026002',
+              'name': 'Buku Harry Potter',
+              'price': 'Rp45.000',
+              'status': 'Selesai',
+              'date': '20 Mei 2026',
+              'seller': 'Toko Buku Lama',
+            },
+            {
+              'inv': 'INV-2026003',
+              'name': 'Roti Sobek',
+              'price': 'Rp5.000',
+              'status': 'Menunggu Konfirmasi',
+              'date': '25 Mei 2026',
+              'seller': 'Mega Store',
+            },
+            {
+              'inv': 'INV-2026006',
+              'name': 'Kaos Polos Hitam',
+              'price': 'Rp35.000',
+              'status': 'Dikemas',
+              'date': '26 Mei 2026',
+              'seller': 'Thrift Corner',
+            },
+          ]
+        : [
+            {
+              'inv': 'INV-2026004',
+              'name': 'Kamera Analog Canon',
+              'price': 'Rp450.000',
+              'status': 'Perlu Dikirim',
+              'date': '25 Mei 2026',
+              'buyer': 'Budi S.',
+            },
+            {
+              'inv': 'INV-2026005',
+              'name': 'Sepatu Vans Second',
+              'price': 'Rp150.000',
+              'status': 'Selesai',
+              'date': '18 Mei 2026',
+              'buyer': 'Sari D.',
+            },
+            {
+              'inv': 'INV-2026007',
+              'name': 'Mouse Logitech',
+              'price': 'Rp45.000',
+              'status': 'Dikemas',
+              'date': '26 Mei 2026',
+              'buyer': 'Rina A.',
+            },
+          ];
+  }
 
   Color _statusColor(String status) {
     switch (status) {
       case 'Selesai':
-        return _primary;
+        return _textSecondary;
       case 'Dikirim':
         return _primary;
+      case 'Dikemas':
+        return _primary;
       case 'Perlu Dikirim':
-        return _primary;
+        return const Color(0xFFE65100);
       case 'Menunggu Konfirmasi':
-        return _primary;
+        return const Color(0xFFE65100);
       default:
         return _textSecondary;
     }
+  }
+
+  bool _hasAction(String type, String status) {
+    if (type == 'penjualan' && status == 'Perlu Dikirim') return true;
+    if (type == 'pembelian' && status == 'Dikirim') return true;
+    return false;
+  }
+
+  // Popup konfirmasi untuk pembeli
+  void _showKonfirmasiTerima(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Pesanan Diterima',
+          style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 16, color: _textPrimary),
+        ),
+        content: const Text(
+          'Apakah kamu sudah menerima barang dengan kondisi baik?',
+          style: TextStyle(color: _textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal',
+                style: TextStyle(color: _textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _orders[index] = {..._orders[index], 'status': 'Selesai'};
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Pesanan telah dikonfirmasi selesai!'),
+                  backgroundColor: Color(0xFF2e7d32),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2e7d32),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Ya, Sudah Diterima'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Popup konfirmasi untuk penjual kirim barang
+  void _showKonfirmasiKirim(BuildContext context, int index) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Kirim Barang',
+          style: TextStyle(
+              fontWeight: FontWeight.w800, fontSize: 16, color: _textPrimary),
+        ),
+        content: const Text(
+          'Konfirmasi bahwa kamu sudah mengirimkan barang ke pembeli?',
+          style: TextStyle(color: _textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal',
+                style: TextStyle(color: _textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _orders[index] = {..._orders[index], 'status': 'Dikirim'};
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Barang berhasil dikonfirmasi dikirim!'),
+                  backgroundColor: _primary,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Ya, Sudah Dikirim'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -155,6 +287,8 @@ class _OrderList extends StatelessWidget {
       itemBuilder: (context, i) {
         final o = _orders[i];
         final statusColor = _statusColor(o['status']!);
+        final hasAction = _hasAction(widget.type, o['status']!);
+
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -168,11 +302,14 @@ class _OrderList extends StatelessWidget {
           ),
           child: Column(
             children: [
+              // Header: nomor invoice + status badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: _surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -183,11 +320,13 @@ class _OrderList extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: _textSecondary)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: statusColor.withOpacity(0.3)),
+                        border:
+                            Border.all(color: statusColor.withOpacity(0.3)),
                       ),
                       child: Text(o['status']!,
                           style: TextStyle(
@@ -198,6 +337,8 @@ class _OrderList extends StatelessWidget {
                   ],
                 ),
               ),
+
+              // Info produk
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -224,7 +365,7 @@ class _OrderList extends StatelessWidget {
                                   color: _textPrimary)),
                           const SizedBox(height: 4),
                           Text(
-                            type == 'pembelian'
+                            widget.type == 'pembelian'
                                 ? 'Penjual: ${o['seller']}'
                                 : 'Pembeli: ${o['buyer']}',
                             style: const TextStyle(
@@ -245,14 +386,26 @@ class _OrderList extends StatelessWidget {
                   ],
                 ),
               ),
+
               const Divider(height: 1, color: _surface),
+
+              // Tombol aksi
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrderDetailScreen(
+                            order: o,
+                            type: widget.type,
+                          ),
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primary,
                         side: const BorderSide(color: _primary),
@@ -264,12 +417,20 @@ class _OrderList extends StatelessWidget {
                       child: const Text('Lihat Detail',
                           style: TextStyle(fontSize: 12)),
                     ),
-                    if (type == 'penjualan' && o['status'] == 'Perlu Dikirim') ...[
+                    if (hasAction) ...[
                       const SizedBox(width: 8),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          if (widget.type == 'pembelian') {
+                            _showKonfirmasiTerima(context, i);
+                          } else {
+                            _showKonfirmasiKirim(context, i);
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: widget.type == 'pembelian'
+                              ? const Color(0xFF2e7d32)
+                              : _primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -277,25 +438,12 @@ class _OrderList extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                         ),
-                        child: const Text('Kirim Barang',
-                            style: TextStyle(fontSize: 12)),
-                      ),
-                    ],
-                    if (type == 'pembelian' && o['status'] == 'Dikirim') ...[
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2e7d32), // hijau tetap untuk konfirmasi
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                        child: Text(
+                          widget.type == 'pembelian'
+                              ? 'Pesanan Diterima'
+                              : 'Kirim Barang',
+                          style: const TextStyle(fontSize: 12),
                         ),
-                        child: const Text('Konfirmasi Terima',
-                            style: TextStyle(fontSize: 12)),
                       ),
                     ],
                   ],
