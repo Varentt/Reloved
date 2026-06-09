@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:reloved/utils/cart_manager.dart';
+import 'package:reloved/screens/checkout_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -15,63 +17,21 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final List<Map<String, dynamic>> _cartItems = [
-    {
-      'name': 'Sepatu Vans Second',
-      'price': 150000,
-      'badge': 'SECOND',
-      'loc': 'Malang',
-      'seller': 'Reloved Store',
-      'qty': 1,
-      'selected': true,
-    },
-    {
-      'name': 'Mouse Logitech Reject',
-      'price': 45000,
-      'badge': 'REJECT',
-      'loc': 'Surabaya',
-      'seller': 'Gadget Murah',
-      'qty': 1,
-      'selected': true,
-    },
-    {
-      'name': 'Roti Sobek',
-      'price': 5000,
-      'badge': 'EXPIRED',
-      'loc': 'Jember',
-      'seller': 'Mega Store',
-      'qty': 2,
-      'selected': false,
-    },
-  ];
+  final _cart = CartManager();
 
-  bool get _allSelected => _cartItems.every((i) => i['selected'] == true);
-
-  int get _totalPrice => _cartItems
-      .where((i) => i['selected'] == true)
-      .fold(0, (sum, i) => sum + (i['price'] as int) * (i['qty'] as int));
-
-  int get _selectedCount => _cartItems.where((i) => i['selected'] == true).length;
-
-  void _toggleAll(bool? val) {
-    setState(() {
-      for (final item in _cartItems) {
-        item['selected'] = val ?? false;
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _cart.addListener(_refresh);
   }
 
-  void _removeItem(int index) {
-    setState(() => _cartItems.removeAt(index));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Item dihapus dari keranjang'),
-        backgroundColor: _primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+  @override
+  void dispose() {
+    _cart.removeListener(_refresh);
+    super.dispose();
   }
+
+  void _refresh() => setState(() {});
 
   String _formatPrice(int price) {
     final str = price.toString();
@@ -84,15 +44,69 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Color _badgeColor(String badge) {
-    switch (badge) {
-      case 'REJECT': return const Color(0xFFe65100);
-      case 'EXPIRED': return const Color(0xFF2e7d32);
-      default: return _primary;
+    return _primary; // semua biru sesuai tema
+  }
+
+  void _removeItem(int index) {
+    _cart.removeItem(index);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Item dihapus dari keranjang'),
+        backgroundColor: _primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _handleCheckout(BuildContext context) {
+    final selected = <Map<String, dynamic>>[];
+    for (final item in _cart.items) {
+      if (item['selected'] == true) selected.add(Map<String, dynamic>.from(item));
     }
+    final sellers = <String>{};
+    for (final item in selected) {
+      sellers.add(item['seller'] as String);
+    }
+
+    if (sellers.length > 1) {
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Produk Beda Toko',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          content: const Text(
+              'Kamu hanya bisa checkout produk dari 1 toko dalam 1 transaksi. '
+              'Pilih produk dari toko yang sama ya!'),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CheckoutScreen(products: selected),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final items = _cart.items;
+
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
@@ -108,33 +122,40 @@ class _CartScreenState extends State<CartScreen> {
         ),
         backgroundColor: _primary,
         title: Text(
-          'Keranjang${_cartItems.isNotEmpty ? ' (${_cartItems.length})' : ''}',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+          'Keranjang${items.isNotEmpty ? ' (${items.length})' : ''}',
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _cartItems.isEmpty
-          ? _EmptyCart()
+      body: items.isEmpty
+          ? const _EmptyCart()
           : Column(
               children: [
                 // Pilih semua
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                   child: Row(
                     children: [
                       Checkbox(
-                        value: _allSelected,
-                        onChanged: _toggleAll,
+                        value: _cart.allSelected,
+                        onChanged: _cart.toggleAll,
                         activeColor: _primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
                       ),
                       const Text('Pilih Semua',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: _textPrimary)),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: _textPrimary)),
                       const Spacer(),
-                      if (_selectedCount > 0)
-                        Text('$_selectedCount item dipilih',
-                            style: const TextStyle(fontSize: 12, color: _textSecondary)),
+                      if (_cart.selectedCount > 0)
+                        Text('${_cart.selectedCount} item dipilih',
+                            style: const TextStyle(
+                                fontSize: 12, color: _textSecondary)),
                     ],
                   ),
                 ),
@@ -144,10 +165,11 @@ class _CartScreenState extends State<CartScreen> {
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.all(14),
-                    itemCount: _cartItems.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: 10),
                     itemBuilder: (context, i) {
-                      final item = _cartItems[i];
+                      final item = items[i];
                       return Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -163,15 +185,14 @@ class _CartScreenState extends State<CartScreen> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Checkbox
                             Checkbox(
                               value: item['selected'] as bool,
-                              onChanged: (val) => setState(() => item['selected'] = val),
+                              onChanged: (val) =>
+                                  _cart.toggleSelected(i, val),
                               activeColor: _primary,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4)),
                             ),
-
-                            // Gambar
                             Container(
                               width: 72,
                               height: 72,
@@ -181,66 +202,83 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               child: Stack(
                                 children: [
-                                  const Center(child: Icon(Icons.image_outlined, color: _textSecondary, size: 28)),
+                                  const Center(
+                                      child: Icon(Icons.image_outlined,
+                                          color: _textSecondary, size: 28)),
                                   Positioned(
-                                    top: 4, left: 4,
+                                    top: 4,
+                                    left: 4,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: _badgeColor(item['badge'] as String),
-                                        borderRadius: BorderRadius.circular(4),
+                                        color: _badgeColor(
+                                            item['badge'] as String),
+                                        borderRadius:
+                                            BorderRadius.circular(4),
                                       ),
                                       child: Text(item['badge'] as String,
-                                          style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800)),
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 7,
+                                              fontWeight: FontWeight.w800)),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 12),
-
-                            // Info
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
                                   children: [
                                     Text(item['name'] as String,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                            color: _textPrimary)),
                                     const SizedBox(height: 2),
                                     Text(item['seller'] as String,
-                                        style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: _textSecondary)),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Text(_formatPrice(item['price'] as int),
+                                        Text(
+                                            _formatPrice(
+                                                item['price'] as int),
                                             style: const TextStyle(
-                                                color: _primary, fontWeight: FontWeight.w800, fontSize: 14)),
+                                                color: _primary,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 14)),
                                         const Spacer(),
-                                        // Qty control
                                         _QtyButton(
                                           icon: Icons.remove,
-                                          onTap: () {
-                                            if ((item['qty'] as int) > 1) {
-                                              setState(() => item['qty'] = (item['qty'] as int) - 1);
-                                            } else {
-                                              _removeItem(i);
-                                            }
-                                          },
+                                          onTap: () => _cart.updateQty(
+                                              i,
+                                              (item['qty'] as int) - 1),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10),
                                           child: Text('${item['qty']}',
                                               style: const TextStyle(
-                                                  fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                  color: _textPrimary)),
                                         ),
                                         _QtyButton(
                                           icon: Icons.add,
-                                          onTap: () => setState(() => item['qty'] = (item['qty'] as int) + 1),
+                                          onTap: () => _cart.updateQty(
+                                              i,
+                                              (item['qty'] as int) + 1),
                                         ),
                                         const SizedBox(width: 8),
                                       ],
@@ -256,9 +294,10 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
 
-                // ── Bottom bar ──
+                // Bottom bar
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -276,27 +315,35 @@ class _CartScreenState extends State<CartScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text('Total Pembayaran',
-                              style: TextStyle(fontSize: 11, color: _textSecondary)),
-                          Text(_formatPrice(_totalPrice),
+                              style: TextStyle(
+                                  fontSize: 11, color: _textSecondary)),
+                          Text(_formatPrice(_cart.totalPrice),
                               style: const TextStyle(
-                                  color: _primary, fontWeight: FontWeight.w900, fontSize: 18)),
+                                  color: _primary,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18)),
                         ],
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _selectedCount > 0 ? () {} : null,
+                          onPressed: _cart.selectedCount > 0 ? () => _handleCheckout(context) : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primary,
                             disabledBackgroundColor: _accent,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
-                            _selectedCount > 0 ? 'Beli ($_selectedCount)' : 'Pilih Item',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            _cart.selectedCount > 0
+                                ? 'Beli (${_cart.selectedCount})'
+                                : 'Pilih Item',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w800, fontSize: 15),
                           ),
                         ),
                       ),
@@ -331,7 +378,9 @@ class _QtyButton extends StatelessWidget {
 }
 
 class _EmptyCart extends StatelessWidget {
-  @override
+  const _EmptyCart();
+
+    @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
@@ -343,11 +392,15 @@ class _EmptyCart extends StatelessWidget {
               color: _accent.withOpacity(0.4),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shopping_cart_outlined, size: 48, color: _primary),
+            child: const Icon(Icons.shopping_cart_outlined,
+                size: 48, color: _primary),
           ),
           const SizedBox(height: 16),
           const Text('Keranjang masih kosong',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textPrimary)),
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: _textPrimary)),
           const SizedBox(height: 6),
           const Text('Tambah produk yang kamu suka\nke keranjang dulu ya!',
               textAlign: TextAlign.center,

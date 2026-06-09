@@ -8,9 +8,26 @@ const _textPrimary = Color(0xFF1a2535);
 const _textSecondary = Color(0xFF7a8fa6);
 
 class CheckoutScreen extends StatefulWidget {
-  final Map<String, String> product;
+  final List<Map<String, dynamic>> products;
 
-  const CheckoutScreen({super.key, required this.product});
+  const CheckoutScreen({super.key, required this.products});
+
+  factory CheckoutScreen.fromProduct(Map<String, String> product, {int qty = 1}) {
+    return CheckoutScreen(
+      products: [
+        {
+          'name': product['name'] ?? '',
+          'price': int.tryParse(product['price']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0,
+          'normalPrice': product['normalPrice'] ?? '',
+          'badge': product['badge'] ?? 'SECOND',
+          'loc': product['loc'] ?? '-',
+          'seller': 'Nama Penjual',
+          'qty': qty,
+          'selected': true,
+        }
+      ],
+    );
+  }
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -34,28 +51,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   ];
 
   final List<Map<String, dynamic>> _payments = [
-    {
-      'name': 'Transfer Bank',
-      'sub': 'BCA, BRI, BNI, Mandiri',
-      'icon': Icons.account_balance_outlined,
-    },
-    {
-      'name': 'Dompet Digital',
-      'sub': 'GoPay, OVO, Dana, ShopeePay',
-      'icon': Icons.account_balance_wallet_outlined,
-    },
-    {
-      'name': 'Bayar di Tempat',
-      'sub': 'COD - Cash On Delivery',
-      'icon': Icons.payments_outlined,
-    },
+    {'name': 'Transfer Bank', 'sub': 'BCA, BRI, BNI, Mandiri', 'icon': Icons.account_balance_outlined},
+    {'name': 'Dompet Digital', 'sub': 'GoPay, OVO, Dana, ShopeePay', 'icon': Icons.account_balance_wallet_outlined},
+    {'name': 'Bayar di Tempat', 'sub': 'COD - Cash On Delivery', 'icon': Icons.payments_outlined},
   ];
 
-  String _formatPrice(String price) => price;
+  int get _subtotal => widget.products.fold(
+      0, (sum, p) => sum + (p['price'] as int) * (p['qty'] as int));
 
-  int _parsePrice(String price) {
-    return int.tryParse(price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-  }
+  final int _ongkir = 15000;
+  int get _total => _subtotal + _ongkir;
 
   String _toRupiah(int val) {
     final str = val.toString();
@@ -69,10 +74,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.product;
-    final productPrice = _parsePrice(p['price'] ?? '0');
-    final ongkir = 15000;
-    final total = productPrice + ongkir;
+    final sellerName = widget.products.first['seller'] as String;
 
     return Scaffold(
       backgroundColor: _surface,
@@ -88,10 +90,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
         backgroundColor: _primary,
-        title: const Text(
-          'Checkout',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-        ),
+        title: const Text('Checkout',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
@@ -103,7 +103,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Ringkasan Produk ──
-                  _SectionTitle(title: 'Ringkasan Produk'),
+                  const _SectionTitle(title: 'Ringkasan Produk'),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _accent.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.store_outlined, size: 16, color: _primary),
+                        const SizedBox(width: 8),
+                        Text(sellerName,
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _primary)),
+                        const Spacer(),
+                        Text('${widget.products.length} produk',
+                            style: const TextStyle(fontSize: 12, color: _textSecondary)),
+                      ],
+                    ),
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -112,65 +131,74 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
                       ],
                     ),
-                    padding: const EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            color: _accent.withOpacity(0.4),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Stack(
-                            children: [
-                              const Center(child: Icon(Icons.image_outlined, color: _textSecondary, size: 28)),
-                              Positioned(
-                                top: 4, left: 4,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                  decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(4)),
-                                  child: Text(p['badge'] ?? 'SECOND',
-                                      style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(p['name'] ?? 'Nama Produk',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
-                              const SizedBox(height: 4),
-                              if (p['normalPrice'] != null)
-                                Text(p['normalPrice']!,
-                                    style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 12)),
-                              Text(p['price'] ?? 'Rp0',
-                                  style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 16)),
-                              const SizedBox(height: 4),
-                              Row(
+                    child: Column(
+                      children: widget.products.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final p = entry.value;
+                        final isLast = i == widget.products.length - 1;
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
                                 children: [
-                                  const Icon(Icons.store_outlined, size: 11, color: _textSecondary),
-                                  const SizedBox(width: 3),
-                                  Text(p['loc'] ?? '-', style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: _accent.withOpacity(0.4),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        const Center(child: Icon(Icons.image_outlined, color: _textSecondary, size: 24)),
+                                        Positioned(
+                                          top: 4, left: 4,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                            decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(4)),
+                                            child: Text(p['badge'] as String,
+                                                style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.w800)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(p['name'] as String,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
+                                        const SizedBox(height: 4),
+                                        Text(_toRupiah(p['price'] as int),
+                                            style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 14)),
+                                        Text('x${p['qty']}',
+                                            style: const TextStyle(fontSize: 12, color: _textSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    _toRupiah((p['price'] as int) * (p['qty'] as int)),
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _textPrimary),
+                                  ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ),
+                            if (!isLast) const Divider(height: 1, color: _surface),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
                   // ── Alamat Pengiriman ──
-                  _SectionTitle(title: 'Alamat Pengiriman'),
+                  const _SectionTitle(title: 'Alamat Pengiriman'),
                   ...List.generate(_addresses.length, (i) {
                     final addr = _addresses[i];
                     final selected = _selectedAddress == i;
@@ -181,10 +209,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: selected ? _primary : Colors.transparent,
-                            width: 2,
-                          ),
+                          border: Border.all(color: selected ? _primary : Colors.transparent, width: 2),
                           boxShadow: [
                             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
                           ],
@@ -207,21 +232,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: selected ? _primary : _surface,
-                                          borderRadius: BorderRadius.circular(5),
-                                        ),
-                                        child: Text(addr['name']!,
-                                            style: TextStyle(
-                                                color: selected ? Colors.white : _textSecondary,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700)),
-                                      ),
-                                    ],
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: selected ? _primary : _surface,
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                    child: Text(addr['name']!,
+                                        style: TextStyle(
+                                            color: selected ? Colors.white : _textSecondary,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700)),
                                   ),
                                   const SizedBox(height: 6),
                                   Text(addr['receiver']!,
@@ -243,32 +264,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     );
                   }),
-                  GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: _accent),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.add, color: _primary, size: 18),
-                          const SizedBox(width: 6),
-                          const Text('Tambah Alamat Baru',
-                              style: TextStyle(color: _primary, fontWeight: FontWeight.w600, fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Tombol "Tambah Alamat Baru" dihapus
 
                   const SizedBox(height: 20),
 
                   // ── Metode Pembayaran ──
-                  _SectionTitle(title: 'Metode Pembayaran'),
+                  const _SectionTitle(title: 'Metode Pembayaran'),
                   ...List.generate(_payments.length, (i) {
                     final pay = _payments[i];
                     final selected = _selectedPayment == i;
@@ -279,10 +280,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: selected ? _primary : Colors.transparent,
-                            width: 2,
-                          ),
+                          border: Border.all(color: selected ? _primary : Colors.transparent, width: 2),
                           boxShadow: [
                             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
                           ],
@@ -326,7 +324,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 20),
 
                   // ── Rincian Harga ──
-                  _SectionTitle(title: 'Rincian Harga'),
+                  const _SectionTitle(title: 'Rincian Harga'),
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -338,18 +336,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        _PriceRow(label: 'Harga Produk', value: _formatPrice(p['price'] ?? 'Rp0')),
-                        const SizedBox(height: 10),
-                        _PriceRow(label: 'Ongkos Kirim', value: _toRupiah(ongkir)),
+                        ...widget.products.map((p) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _PriceRow(
+                                label: '${p['name']} x${p['qty']}',
+                                value: _toRupiah((p['price'] as int) * (p['qty'] as int)),
+                              ),
+                            )),
+                        _PriceRow(label: 'Ongkos Kirim', value: _toRupiah(_ongkir)),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
                           child: Divider(height: 1, color: _surface),
                         ),
-                        _PriceRow(
-                          label: 'Total Pembayaran',
-                          value: _toRupiah(total),
-                          isTotal: true,
-                        ),
+                        _PriceRow(label: 'Total Pembayaran', value: _toRupiah(_total), isTotal: true),
                       ],
                     ),
                   ),
@@ -360,7 +359,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
 
-          // ── Tombol Beli ──
+          // ── Tombol Konfirmasi ──
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: BoxDecoration(
@@ -377,7 +376,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   children: [
                     const Text('Total Pembayaran',
                         style: TextStyle(fontSize: 12, color: _textSecondary)),
-                    Text(_toRupiah(total),
+                    Text(_toRupiah(_total),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _primary)),
                   ],
                 ),
@@ -468,11 +467,13 @@ class _PriceRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: isTotal ? 14 : 13,
-                fontWeight: isTotal ? FontWeight.w700 : FontWeight.normal,
-                color: isTotal ? _textPrimary : _textSecondary)),
+        Expanded(
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: isTotal ? 14 : 13,
+                  fontWeight: isTotal ? FontWeight.w700 : FontWeight.normal,
+                  color: isTotal ? _textPrimary : _textSecondary)),
+        ),
         Text(value,
             style: TextStyle(
                 fontSize: isTotal ? 16 : 13,

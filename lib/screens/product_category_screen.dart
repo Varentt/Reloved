@@ -24,8 +24,9 @@ class ProductCategoryScreen extends StatefulWidget {
 
 class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   String _sortBy = 'Terbaru';
+  String _expFilter = 'Semua'; // 'Semua' | 'Terdekat' | 'Terjauh'
 
-  List<Map<String, String>> get _products {
+  List<Map<String, String>> get _rawProducts {
     if (widget.categoryType == 'SECOND') {
       return [
         {'name': 'Sepatu Vans Second', 'price': 'Rp150.000', 'normalPrice': 'Rp300.000', 'loc': 'Malang', 'badge': 'SECOND'},
@@ -42,12 +43,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         {'name': 'Charger Original Reject', 'price': 'Rp35.000', 'normalPrice': 'Rp75.000', 'loc': 'Surabaya', 'badge': 'REJECT'},
       ];
     }
+    // EXPIRED — pakai expiryDays untuk sorting
     return [
-      {'name': 'Roti Sobek', 'price': 'Rp5.000', 'normalPrice': 'Rp12.000', 'loc': 'Jember', 'badge': 'EXPIRED', 'expiry': '3 hari lagi'},
-      {'name': 'Susu UHT', 'price': 'Rp3.000', 'normalPrice': 'Rp8.000', 'loc': 'Banyuwangi', 'badge': 'EXPIRED', 'expiry': '1 hari lagi'},
-      {'name': 'Yogurt Buah', 'price': 'Rp4.000', 'normalPrice': 'Rp10.000', 'loc': 'Malang', 'badge': 'EXPIRED', 'expiry': '2 hari lagi'},
-      {'name': 'Snack Keripik', 'price': 'Rp2.000', 'normalPrice': 'Rp6.000', 'loc': 'Surabaya', 'badge': 'EXPIRED', 'expiry': '5 hari lagi'},
+      {'name': 'Roti Sobek', 'price': 'Rp5.000', 'normalPrice': 'Rp12.000', 'loc': 'Jember', 'badge': 'EXPIRED', 'expiry': '3 hari lagi', 'expiryDays': '3'},
+      {'name': 'Susu UHT', 'price': 'Rp3.000', 'normalPrice': 'Rp8.000', 'loc': 'Banyuwangi', 'badge': 'EXPIRED', 'expiry': '1 hari lagi', 'expiryDays': '1'},
+      {'name': 'Yogurt Buah', 'price': 'Rp4.000', 'normalPrice': 'Rp10.000', 'loc': 'Malang', 'badge': 'EXPIRED', 'expiry': '2 hari lagi', 'expiryDays': '2'},
+      {'name': 'Snack Keripik', 'price': 'Rp2.000', 'normalPrice': 'Rp6.000', 'loc': 'Surabaya', 'badge': 'EXPIRED', 'expiry': '5 hari lagi', 'expiryDays': '5'},
     ];
+  }
+
+  List<Map<String, String>> get _products {
+    var list = List<Map<String, String>>.from(_rawProducts);
+    if (widget.categoryType == 'EXPIRED') {
+      if (_expFilter == 'Terdekat') {
+        list.sort((a, b) => int.parse(a['expiryDays'] ?? '0').compareTo(int.parse(b['expiryDays'] ?? '0')));
+      } else if (_expFilter == 'Terjauh') {
+        list.sort((a, b) => int.parse(b['expiryDays'] ?? '0').compareTo(int.parse(a['expiryDays'] ?? '0')));
+      }
+    }
+    return list;
   }
 
   Color _badgeColor(String badge) => _primary;
@@ -71,9 +85,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         title: Text(widget.categoryTitle,
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
-        ],
+        // search icon dihapus
       ),
       body: Column(
         children: [
@@ -102,15 +114,25 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                 ),
                 if (widget.categoryType == 'EXPIRED') ...[
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(border: Border.all(color: _accent), borderRadius: BorderRadius.circular(8)),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.filter_list, size: 14, color: _primary),
-                        SizedBox(width: 4),
-                        Text('Filter Exp', style: TextStyle(fontSize: 12, color: _primary, fontWeight: FontWeight.w600)),
-                      ],
+                  GestureDetector(
+                    onTap: () => _showExpFilterSheet(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: _expFilter != 'Semua' ? _primary : _accent),
+                        borderRadius: BorderRadius.circular(8),
+                        color: _expFilter != 'Semua' ? _primary.withOpacity(0.08) : Colors.transparent,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.filter_list, size: 14, color: _primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            _expFilter == 'Semua' ? 'Filter Exp' : 'Exp: $_expFilter',
+                            style: const TextStyle(fontSize: 12, color: _primary, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -118,16 +140,14 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             ),
           ),
 
-          // Grid 4 kolom, card persegi
+          // Grid
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Hitung lebar tiap card: 4 kolom + padding + spacing
                 const crossAxisCount = 4;
                 const padding = 10.0;
                 const spacing = 8.0;
                 final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
-                // Gambar persegi = cardWidth, info di bawah ~80px
                 final cardHeight = cardWidth + 82.0;
                 final ratio = cardWidth / cardHeight;
 
@@ -158,10 +178,9 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Gambar — persegi sesuai lebar card
                             SizedBox(
                               width: cardWidth,
-                              height: cardWidth, // persegi!
+                              height: cardWidth,
                               child: Stack(
                                 children: [
                                   Container(
@@ -175,7 +194,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                       child: Icon(Icons.image_outlined, size: 22, color: _textSecondary),
                                     ),
                                   ),
-                                  // Badge
                                   Positioned(
                                     top: 3, left: 3,
                                     child: Container(
@@ -188,7 +206,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                           style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w800)),
                                     ),
                                   ),
-                                  // Label expired
                                   if (p['expiry'] != null)
                                     Positioned(
                                       bottom: 3, left: 3, right: 3,
@@ -202,7 +219,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                             style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w700)),
                                       ),
                                     ),
-                                  // Favorit
                                   Positioned(
                                     top: 3, right: 3,
                                     child: Container(
@@ -214,8 +230,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                                 ],
                               ),
                             ),
-
-                            // Info produk — fixed 80px
                             SizedBox(
                               height: 80,
                               child: Padding(
@@ -286,6 +300,60 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                 trailing: _sortBy == s ? const Icon(Icons.check, color: _primary) : null,
                 onTap: () {
                   setState(() => _sortBy = s);
+                  Navigator.pop(context);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showExpFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Filter Kadaluarsa',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _textPrimary)),
+            const SizedBox(height: 4),
+            const Text('Urutkan berdasarkan tanggal kadaluarsa',
+                style: TextStyle(fontSize: 12, color: _textSecondary)),
+            const SizedBox(height: 12),
+            for (final option in [
+              {'value': 'Semua', 'label': 'Semua', 'desc': 'Tampilkan semua produk', 'icon': Icons.all_inclusive},
+              {'value': 'Terdekat', 'label': 'Exp Terdekat', 'desc': 'Produk yang akan segera kadaluarsa', 'icon': Icons.alarm},
+              {'value': 'Terjauh', 'label': 'Exp Terjauh', 'desc': 'Produk dengan masa berlaku paling lama', 'icon': Icons.event_available},
+            ])
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _expFilter == option['value'] ? _primary.withOpacity(0.12) : _accent.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(option['icon'] as IconData,
+                      size: 18,
+                      color: _expFilter == option['value'] ? _primary : _textSecondary),
+                ),
+                title: Text(option['label'] as String,
+                    style: TextStyle(
+                        fontWeight: _expFilter == option['value'] ? FontWeight.w700 : FontWeight.w500,
+                        color: _expFilter == option['value'] ? _primary : _textPrimary,
+                        fontSize: 14)),
+                subtitle: Text(option['desc'] as String,
+                    style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                trailing: _expFilter == option['value']
+                    ? const Icon(Icons.check_circle, color: _primary)
+                    : null,
+                onTap: () {
+                  setState(() => _expFilter = option['value'] as String);
                   Navigator.pop(context);
                 },
               ),

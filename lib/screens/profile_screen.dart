@@ -5,7 +5,6 @@ import 'package:reloved/screens/riwayat_transaksi_screen.dart';
 import 'package:reloved/screens/daftar_alamat_screen.dart';
 import 'package:reloved/screens/statistik_penjualan_screen.dart';
 import 'package:reloved/screens/pengaturan_akun_screen.dart';
-import 'package:reloved/screens/pusat_bantuan_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -32,8 +31,7 @@ class ProfileScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(32)),
+
               ),
               child: SafeArea(
                 bottom: false,
@@ -45,25 +43,17 @@ class ProfileScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Profil Saya',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800)),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
                           GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const PengaturanAkunScreen()),
-                            ),
+                            onTap: () => Navigator.push(context,
+                                MaterialPageRoute(builder: (_) => const PengaturanAkunScreen())),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.edit_outlined,
-                                  color: Colors.white, size: 18),
+                              child: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
                             ),
                           ),
                         ],
@@ -74,15 +64,12 @@ class ProfileScreen extends StatelessWidget {
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white.withOpacity(0.4),
-                                  width: 3),
+                              border: Border.all(color: Colors.white.withOpacity(0.4), width: 3),
                             ),
                             child: CircleAvatar(
                               radius: 38,
                               backgroundColor: _accent.withOpacity(0.3),
-                              child: const Icon(Icons.person,
-                                  size: 46, color: Colors.white),
+                              child: const Icon(Icons.person, size: 46, color: Colors.white),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -91,14 +78,10 @@ class ProfileScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text('Nama Lengkap',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white)),
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                                 const SizedBox(height: 2),
                                 const Text('user@email.com',
-                                    style: TextStyle(
-                                        color: Colors.white70, fontSize: 13)),
+                                    style: TextStyle(color: Colors.white70, fontSize: 13)),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
@@ -126,20 +109,15 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.history,
               label: 'Riwayat Transaksi',
               iconColor: _primary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const RiwayatTransaksiScreen()),
-              ),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const RiwayatTransaksiScreen())),
             ),
             _MenuItem(
               icon: Icons.location_on_outlined,
               label: 'Daftar Alamat',
               iconColor: _primary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DaftarAlamatScreen()),
-              ),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const DaftarAlamatScreen())),
             ),
 
             const SizedBox(height: 16),
@@ -150,20 +128,15 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.inventory_2_outlined,
               label: 'Produk Saya',
               iconColor: _primary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MyProductsScreen()),
-              ),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MyProductsScreen())),
             ),
             _MenuItem(
               icon: Icons.analytics_outlined,
               label: 'Statistik Penjualan',
               iconColor: _primary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const StatistikPenjualanScreen()),
-              ),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const StatistikPenjualanScreen())),
             ),
 
             const SizedBox(height: 16),
@@ -174,20 +147,8 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.settings_outlined,
               label: 'Pengaturan Akun',
               iconColor: _textSecondary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const PengaturanAkunScreen()),
-              ),
-            ),
-            _MenuItem(
-              icon: Icons.help_outline,
-              label: 'Pusat Bantuan',
-              iconColor: _textSecondary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PusatBantuanScreen()),
-              ),
+              onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const PengaturanAkunScreen())),
             ),
             _MenuItem(
               icon: Icons.logout,
@@ -209,10 +170,8 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar',
-            style: TextStyle(fontWeight: FontWeight.w800)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w800)),
         content: const Text('Yakin ingin keluar dari akun?'),
         actions: [
           TextButton(
@@ -222,26 +181,20 @@ class ProfileScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()));
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Keluar',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 }
-
-// ── Reusable widgets ──
 
 class _StatBadge extends StatelessWidget {
   const _StatBadge({required this.label, required this.value});
@@ -259,12 +212,8 @@ class _StatBadge extends StatelessWidget {
       child: Column(
         children: [
           Text(value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14)),
-          Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 9)),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 9)),
         ],
       ),
     );
@@ -283,10 +232,7 @@ class _SectionHeader extends StatelessWidget {
         alignment: Alignment.centerLeft,
         child: Text(label,
             style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _textSecondary,
-                letterSpacing: 0.5)),
+                fontSize: 13, fontWeight: FontWeight.w700, color: _textSecondary, letterSpacing: 0.5)),
       ),
     );
   }
@@ -318,15 +264,11 @@ class _MenuItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 2)),
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
         ],
       ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -337,30 +279,20 @@ class _MenuItem extends StatelessWidget {
         ),
         title: Text(label,
             style: TextStyle(
-                color: textColor ?? _textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 14)),
+                color: textColor ?? _textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (badge != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _primary,
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(20)),
                 child: Text(badge!,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700)),
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
               ),
             if (showArrow) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.arrow_forward_ios,
-                  size: 13, color: _textSecondary),
+              const Icon(Icons.arrow_forward_ios, size: 13, color: _textSecondary),
             ],
           ],
         ),

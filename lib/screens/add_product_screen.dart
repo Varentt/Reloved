@@ -20,6 +20,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  int _stok = 1; // stok default 1
 
   String? _selectedCategory;
   String? _selectedCondition;
@@ -53,7 +54,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── AppBar dengan gradien ──
+            // ── AppBar ──
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -131,6 +132,66 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     // Harga Jual
                     _buildLabel('Harga Jual (Rp)'),
                     _buildTextField(_priceController, 'Contoh: 150000', isNumber: true),
+
+                    const SizedBox(height: 14),
+
+                    // ── Jumlah Stok ──
+                    _buildLabel('Jumlah Stok'),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: _accent),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.inventory_2_outlined, size: 18, color: _primary),
+                          const SizedBox(width: 10),
+                          const Text('Stok tersedia',
+                              style: TextStyle(fontSize: 13, color: _textSecondary)),
+                          const Spacer(),
+                          // Tombol kurang
+                          GestureDetector(
+                            onTap: () {
+                              if (_stok > 1) setState(() => _stok--);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: _stok > 1 ? _accent : _accent.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.remove,
+                                  size: 16,
+                                  color: _stok > 1 ? _primary : _textSecondary),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              '$_stok',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: _textPrimary),
+                            ),
+                          ),
+                          // Tombol tambah
+                          GestureDetector(
+                            onTap: () => setState(() => _stok++),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: _accent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.add, size: 16, color: _primary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     const SizedBox(height: 14),
 
@@ -225,16 +286,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Simpan ke Firestore
+                          // TODO: Simpan ke backend
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Produk berhasil ditambahkan!')),
+                            SnackBar(
+                              content: const Text('Produk berhasil ditambahkan!'),
+                              backgroundColor: _primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                           elevation: 0,
                         ),
                         child: const Text(
@@ -260,7 +328,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary),
+        style: const TextStyle(
+            fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary),
       ),
     );
   }
@@ -277,7 +346,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: _accent),
@@ -307,7 +377,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: _accent),
@@ -321,7 +392,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           borderSide: const BorderSide(color: _primary, width: 1.5),
         ),
       ),
-      items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 14, color: _textPrimary)))).toList(),
+      items: items
+          .map((item) => DropdownMenuItem(
+              value: item,
+              child: Text(item,
+                  style: const TextStyle(fontSize: 14, color: _textPrimary))))
+          .toList(),
       onChanged: onChanged,
     );
   }

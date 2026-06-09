@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:reloved/screens/checkout_screen.dart';
+import 'package:reloved/utils/cart_manager.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -19,8 +20,17 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFavorite = false;
+  int _qty = 1;
 
-  Color get _badgeColor => _primary; // semua kategori biru
+  int get _stok {
+    try {
+      return int.parse(widget.product['stok'] ?? '1');
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  Color get _badgeColor => _primary;
 
   String get _discountLabel {
     try {
@@ -44,7 +54,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         children: [
           CustomScrollView(
             slivers: [
-              // ── App Bar dengan gambar ──
               SliverAppBar(
                 expandedHeight: 320,
                 pinned: true,
@@ -97,7 +106,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
 
-              // ── Konten ──
               SliverToBoxAdapter(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -109,7 +117,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Badge + diskon
                         Row(
                           children: [
                             Container(
@@ -165,7 +172,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         const Divider(color: _surface),
                         const SizedBox(height: 12),
 
-                        // Info kondisi
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -179,13 +185,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               _InfoRow('Kategori', _badgeLabel(p['badge'])),
                               const SizedBox(height: 8),
                               _InfoRow('Lokasi', p['loc'] ?? '-'),
+                              const SizedBox(height: 8),
+                              _InfoRow('Stok', '${p['stok'] ?? '1'} tersedia'),
                             ],
                           ),
                         ),
 
                         const SizedBox(height: 16),
 
-                        // Penjual
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -218,7 +225,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ],
                                 ),
                               ),
-
                             ],
                           ),
                         ),
@@ -227,7 +233,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         const Divider(color: _surface),
                         const SizedBox(height: 12),
 
-                        // Deskripsi
                         const Text('Deskripsi Produk',
                             style: TextStyle(
                                 fontSize: 16,
@@ -244,6 +249,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               color: _textSecondary, height: 1.6, fontSize: 13),
                         ),
 
+                        const SizedBox(height: 16),
+                        const Divider(color: _surface),
+                        const SizedBox(height: 12),
+
+                        // ── Qty Selector ──
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Jumlah',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: _textPrimary)),
+                            Row(
+                              children: [
+                                Text('Stok: $_stok',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: _textSecondary)),
+                                const SizedBox(width: 16),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (_qty > 1) setState(() => _qty--);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: _qty > 1 ? _accent : _accent.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.remove,
+                                        size: 16,
+                                        color: _qty > 1 ? _primary : _textSecondary),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Text('$_qty',
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: _textPrimary)),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (_qty < _stok) setState(() => _qty++);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: _qty < _stok ? _accent : _accent.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.add,
+                                        size: 16,
+                                        color: _qty < _stok ? _primary : _textSecondary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -253,7 +320,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ],
           ),
 
-          // ── Tombol bawah fixed (Chat dihapus, Beli Sekarang full width) ──
+          // ── Tombol bawah fixed ──
           Positioned(
             bottom: 0,
             left: 0,
@@ -269,26 +336,61 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       offset: const Offset(0, -4)),
                 ],
               ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CheckoutScreen(product: widget.product),
+              child: Row(
+                children: [
+                  // Tombol Keranjang
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        CartManager().addProduct(widget.product, qty: _qty);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$_qty produk ditambahkan ke keranjang'),
+                            backgroundColor: _primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                      label: const Text('Keranjang',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 14)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _primary,
+                        side: const BorderSide(color: _primary, width: 1.5),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                  const SizedBox(width: 12),
+                  // Tombol Beli Sekarang
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CheckoutScreen.fromProduct(
+                              widget.product, qty: _qty),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Beli Sekarang',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 15)),
+                    ),
                   ),
-                  child: const Text('Beli Sekarang',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                ),
+                ],
               ),
             ),
           ),

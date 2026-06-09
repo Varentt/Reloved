@@ -24,6 +24,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   String? _selectedCategory;
   String? _selectedCondition;
   DateTime? _expiredDate;
+  int _stok = 1;
 
   final List<String> _categories = [
     'Barang Second',
@@ -107,13 +108,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_a_photo_outlined,
-                                size: 40, color: _primary),
+                            Icon(Icons.add_a_photo_outlined, size: 40, color: _primary),
                             SizedBox(height: 8),
                             Text('Ganti Foto',
-                                style: TextStyle(
-                                    color: _primary,
-                                    fontWeight: FontWeight.w600)),
+                                style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -123,22 +121,77 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
                     // Nama Barang
                     _buildLabel('Nama Barang'),
-                    _buildTextField(
-                        _nameController, 'Contoh: Sepatu Sneaker Nike'),
+                    _buildTextField(_nameController, 'Contoh: Sepatu Sneaker Nike'),
 
                     const SizedBox(height: 14),
 
                     // Harga Normal
                     _buildLabel('Harga Normal (Rp)'),
-                    _buildTextField(_normalPriceController, 'Contoh: 250000',
-                        isNumber: true),
+                    _buildTextField(_normalPriceController, 'Contoh: 250000', isNumber: true),
 
                     const SizedBox(height: 14),
 
                     // Harga Jual
                     _buildLabel('Harga Jual (Rp)'),
-                    _buildTextField(_priceController, 'Contoh: 150000',
-                        isNumber: true),
+                    _buildTextField(_priceController, 'Contoh: 150000', isNumber: true),
+
+                    const SizedBox(height: 14),
+
+                    // Jumlah Stok
+                    _buildLabel('Jumlah Stok'),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: _accent),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.inventory_outlined, size: 18, color: _primary),
+                          const SizedBox(width: 10),
+                          const Text('Stok tersedia',
+                              style: TextStyle(fontSize: 13, color: _textSecondary)),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: _stok > 1 ? () => setState(() => _stok--) : null,
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _stok > 1 ? _primary : _accent.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.remove,
+                                  size: 16,
+                                  color: _stok > 1 ? Colors.white : _textSecondary),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              '$_stok',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: _textPrimary),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => setState(() => _stok++),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: _primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.add, size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                     const SizedBox(height: 14),
 
@@ -148,8 +201,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       value: _selectedCategory,
                       hint: 'Pilih Kategori',
                       items: _categories,
-                      onChanged: (val) =>
-                          setState(() => _selectedCategory = val),
+                      onChanged: (val) => setState(() => _selectedCategory = val),
                     ),
 
                     const SizedBox(height: 14),
@@ -160,8 +212,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       value: _selectedCondition,
                       hint: 'Pilih Kondisi',
                       items: _conditions,
-                      onChanged: (val) =>
-                          setState(() => _selectedCondition = val),
+                      onChanged: (val) => setState(() => _selectedCondition = val),
                     ),
 
                     // Tanggal Kedaluwarsa
@@ -177,8 +228,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             lastDate: DateTime(2035),
                             builder: (context, child) => Theme(
                               data: Theme.of(context).copyWith(
-                                colorScheme: const ColorScheme.light(
-                                    primary: _primary),
+                                colorScheme: const ColorScheme.light(primary: _primary),
                               ),
                               child: child!,
                             ),
@@ -189,8 +239,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                         },
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(color: _accent),
@@ -198,18 +247,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today_outlined,
-                                  size: 18, color: _primary),
+                              const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
                               const SizedBox(width: 10),
                               Text(
                                 _expiredDate == null
                                     ? 'Pilih Tanggal Kedaluwarsa'
                                     : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
                                 style: TextStyle(
-                                  color: _expiredDate == null
-                                      ? _textSecondary
-                                      : _textPrimary,
-                                ),
+                                    color: _expiredDate == null ? _textSecondary : _textPrimary),
                               ),
                             ],
                           ),
@@ -221,8 +266,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
                     // Lokasi
                     _buildLabel('Lokasi'),
-                    _buildTextField(
-                        _locationController, 'Contoh: Malang, Jawa Timur'),
+                    _buildTextField(_locationController, 'Contoh: Malang, Jawa Timur'),
 
                     const SizedBox(height: 14),
 
@@ -241,15 +285,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Simpan ke Firestore
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content:
-                                  const Text('Produk berhasil diperbarui!'),
+                              content: const Text('Produk berhasil diperbarui!'),
                               backgroundColor: _primary,
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           );
                         },
@@ -257,15 +298,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           backgroundColor: _primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           elevation: 0,
                         ),
-                        child: const Text(
-                          'Simpan Perubahan',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w700),
-                        ),
+                        child: const Text('Simpan Perubahan',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                       ),
                     ),
 
@@ -283,11 +320,8 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-            fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary),
-      ),
+      child: Text(text,
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
     );
   }
 
@@ -303,20 +337,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
         hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _accent),
-        ),
+            borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _accent)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _accent),
-        ),
+            borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _accent)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: _primary, width: 1.5)),
       ),
     );
   }
@@ -334,27 +362,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
         hintStyle: const TextStyle(color: _textSecondary, fontSize: 13),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _accent),
-        ),
+            borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _accent)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: _accent),
-        ),
+            borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _accent)),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _primary, width: 1.5),
-        ),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: _primary, width: 1.5)),
       ),
       items: items
           .map((item) => DropdownMenuItem(
-              value: item,
-              child: Text(item,
-                  style: const TextStyle(
-                      fontSize: 14, color: _textPrimary))))
+              value: item, child: Text(item, style: const TextStyle(fontSize: 14, color: _textPrimary))))
           .toList(),
       onChanged: onChanged,
     );
