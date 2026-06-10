@@ -115,9 +115,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       children: [
                         const Icon(Icons.store_outlined, size: 16, color: _primary),
                         const SizedBox(width: 8),
-                        Text(sellerName,
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _primary)),
-                        const Spacer(),
+                        Expanded(
+                          child: Text(sellerName,
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _primary),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        const SizedBox(width: 8),
                         Text('${widget.products.length} produk',
                             style: const TextStyle(fontSize: 12, color: _textSecondary)),
                       ],

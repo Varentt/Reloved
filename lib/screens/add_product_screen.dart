@@ -249,12 +249,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             children: [
                               const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
                               const SizedBox(width: 10),
-                              Text(
-                                _expiredDate == null
-                                    ? 'Pilih Tanggal Kedaluwarsa'
-                                    : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
-                                style: TextStyle(
-                                  color: _expiredDate == null ? _textSecondary : _textPrimary,
+                              Expanded(
+                                child: Text(
+                                  _expiredDate == null
+                                      ? 'Pilih Tanggal Kedaluwarsa'
+                                      : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
+                                  style: TextStyle(
+                                    color: _expiredDate == null ? _textSecondary : _textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

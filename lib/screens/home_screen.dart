@@ -94,13 +94,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         size: 22,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Reloved',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
+                      const Expanded(
+                        child: Text(
+                          'Reloved',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const Spacer(),
@@ -246,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Grid
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          const crossAxisCount = 4;
+                          final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
                           const padding = 16.0;
                           const spacing = 8.0;
                           final cardWidth =
@@ -254,7 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   padding * 2 -
                                   spacing * (crossAxisCount - 1)) /
                               crossAxisCount;
-                          final cardHeight = cardWidth + 60.0;
+                          // Sesuaikan tinggi agar konten tidak overflow bawah
+                          final cardHeight = cardWidth + 80.0;
                           final ratio = cardWidth / cardHeight;
 
                           return Padding(
@@ -640,68 +644,61 @@ class _ProductCard extends StatelessWidget {
               ),
             ),
 
-            SizedBox(
-              height: 60,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(5, 4, 5, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      product['name']!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 9,
-                        color: _textPrimary,
-                        height: 1.2,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(5, 4, 5, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product['name']!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 9,
+                      color: _textPrimary,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    product['normalPrice']!,
+                    style: const TextStyle(
+                      decoration: TextDecoration.lineThrough,
+                      color: _textSecondary,
+                      fontSize: 8,
+                    ),
+                  ),
+                  Text(
+                    product['price']!,
+                    style: const TextStyle(
+                      color: _primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 7,
+                        color: _textSecondary,
                       ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          product['normalPrice']!,
+                      const SizedBox(width: 1),
+                      Expanded(
+                        child: Text(
+                          product['loc']!,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                            color: _textSecondary,
                             fontSize: 8,
+                            color: _textSecondary,
                           ),
                         ),
-                        Text(
-                          product['price']!,
-                          style: const TextStyle(
-                            color: _primary,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 7,
-                          color: _textSecondary,
-                        ),
-                        const SizedBox(width: 1),
-                        Expanded(
-                          child: Text(
-                            product['loc']!,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 8,
-                              color: _textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

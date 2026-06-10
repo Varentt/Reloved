@@ -124,29 +124,32 @@ class MyProductsScreen extends StatelessWidget {
                                 style: const TextStyle(
                                     color: _primary, fontWeight: FontWeight.w800, fontSize: 13)),
                             const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                _SmallButton(
-                                  icon: Icons.edit_outlined,
-                                  label: 'Edit',
-                                  onTap: () => Navigator.push(context,
-                                      MaterialPageRoute(builder: (_) => const EditProductScreen())),
-                                ),
-                                const SizedBox(width: 8),
-                                _SmallButton(
-                                  icon: Icons.delete_outline,
-                                  label: 'Hapus',
-                                  onTap: () {},
-                                  isDestructive: true,
-                                ),
-                                const Spacer(),
-                                if (!isSold)
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
                                   _SmallButton(
-                                    icon: Icons.check_circle_outline,
-                                    label: 'Tandai Terjual',
-                                    onTap: () {},
+                                    icon: Icons.edit_outlined,
+                                    label: 'Edit',
+                                    onTap: () => Navigator.push(context,
+                                        MaterialPageRoute(builder: (_) => const EditProductScreen())),
                                   ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  _SmallButton(
+                                    icon: Icons.delete_outline,
+                                    label: 'Hapus',
+                                    onTap: () {},
+                                    isDestructive: true,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  if (!isSold)
+                                    _SmallButton(
+                                      icon: Icons.check_circle_outline,
+                                      label: 'Tandai Terjual',
+                                      onTap: () {},
+                                    ),
+                                ],
+                              ),
                             ),
                           ],
                         ),

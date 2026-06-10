@@ -420,13 +420,20 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: _textSecondary, fontSize: 13)),
-        Text(value,
+        const SizedBox(width: 16),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
             style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
-                color: _textPrimary)),
+                color: _textPrimary),
+          ),
+        ),
       ],
     );
   }

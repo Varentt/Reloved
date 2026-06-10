@@ -100,29 +100,99 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false, // WORKAROUND untuk bug _viewInsets.isNonNegative di Web
       body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 4,
-              child: _BrandPanel(),
-            ),
-            Expanded(
-              flex: 6,
-              child: _buildFormPanel(),
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth < 600) {
+              // Mode Mobile
+              return SingleChildScrollView(
+                // Tambahkan padding bawah manual jika keyboard muncul di mobile
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Column(
+                  children: [
+                    const SizedBox(
+                      height: 250,
+                      child: _BrandPanel(),
+                    ),
+                    _buildFormPanel(isMobile: true),
+                  ],
+                ),
+              );
+            }
+            // Mode Tablet/Web
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Expanded(
+                  flex: 4,
+                  child: _BrandPanel(),
+                ),
+                Expanded(
+                  flex: 6,
+                  child: _buildFormPanel(isMobile: false),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildFormPanel() {
-    return Stack(
+  Widget _buildFormPanel({required bool isMobile}) {
+    final formContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _TabSwitcher(mode: _mode, onSwitch: _switchMode),
+        const SizedBox(height: 24),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, anim) =>
+              FadeTransition(opacity: anim, child: child),
+          child: _mode == _AuthMode.login
+              ? _LoginForm(
+                  key: const ValueKey('login'),
+                  formKey: _loginFormKey,
+                  emailCtrl: _emailLoginCtrl,
+                  passCtrl: _passLoginCtrl,
+                  rememberMe: _rememberMe,
+                  onRememberChanged: (v) =>
+                      setState(() => _rememberMe = v ?? false),
+                  passVisible: _loginPassVisible,
+                  onTogglePass: () => setState(
+                      () => _loginPassVisible = !_loginPassVisible),
+                  onForgotPassword: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const ForgotPasswordScreen()),
+                  ),
+                  onSubmit: _handleLogin,
+                  onSwitchToRegister: () =>
+                      _switchMode(_AuthMode.register),
+                )
+              : _RegisterForm(
+                  key: const ValueKey('register'),
+                  formKey: _registerFormKey,
+                  nameCtrl: _nameRegCtrl,
+                  emailCtrl: _emailRegCtrl,
+                  passCtrl: _passRegCtrl,
+                  passVisible: _regPassVisible,
+                  onTogglePass: () =>
+                      setState(() => _regPassVisible = !_regPassVisible),
+                  onSubmit: _handleRegister,
+                  onSwitchToLogin: () => _switchMode(_AuthMode.login),
+                ),
+        ),
+        const SizedBox(height: 120), // ruang biar tidak ketutup wave
+      ],
+    );
+
+    final stack = Stack(
       children: [
         // Background putih
-        Container(color: Colors.white, constraints: const BoxConstraints.expand()),
+        Positioned.fill(child: Container(color: Colors.white)),
+        
         // Dekorasi bawah: wave + floating icons
         Positioned(
           bottom: 0,
@@ -147,57 +217,24 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         // Form content
-        SingleChildScrollView(
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _TabSwitcher(mode: _mode, onSwitch: _switchMode),
-              const SizedBox(height: 24),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                transitionBuilder: (child, anim) =>
-                    FadeTransition(opacity: anim, child: child),
-                child: _mode == _AuthMode.login
-                    ? _LoginForm(
-                        key: const ValueKey('login'),
-                        formKey: _loginFormKey,
-                        emailCtrl: _emailLoginCtrl,
-                        passCtrl: _passLoginCtrl,
-                        rememberMe: _rememberMe,
-                        onRememberChanged: (v) =>
-                            setState(() => _rememberMe = v ?? false),
-                        passVisible: _loginPassVisible,
-                        onTogglePass: () => setState(
-                            () => _loginPassVisible = !_loginPassVisible),
-                        onForgotPassword: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ForgotPasswordScreen()),
-                        ),
-                        onSubmit: _handleLogin,
-                        onSwitchToRegister: () =>
-                            _switchMode(_AuthMode.register),
-                      )
-                    : _RegisterForm(
-                        key: const ValueKey('register'),
-                        formKey: _registerFormKey,
-                        nameCtrl: _nameRegCtrl,
-                        emailCtrl: _emailRegCtrl,
-                        passCtrl: _passRegCtrl,
-                        passVisible: _regPassVisible,
-                        onTogglePass: () =>
-                            setState(() => _regPassVisible = !_regPassVisible),
-                        onSubmit: _handleRegister,
-                        onSwitchToLogin: () => _switchMode(_AuthMode.login),
-                      ),
-              ),
-              const SizedBox(height: 120), // ruang biar tidak ketutup wave
-            ],
-          ),
+          child: formContent,
         ),
       ],
     );
+
+    if (isMobile) {
+      return stack;
+    } else {
+      return Container(
+        color: Colors.white,
+        constraints: const BoxConstraints.expand(),
+        child: SingleChildScrollView(
+          child: stack,
+        ),
+      );
+    }
   }
 }
 

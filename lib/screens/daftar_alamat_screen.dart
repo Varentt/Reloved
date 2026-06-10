@@ -268,23 +268,26 @@ class _DaftarAlamatScreenState extends State<DaftarAlamatScreen> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: item['utama']
-                                    ? _primary
-                                    : _accent.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                item['label'],
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: item['utama']
-                                        ? Colors.white
-                                        : _primary),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: item['utama']
+                                      ? _primary
+                                      : _accent.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  item['label'],
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: item['utama']
+                                          ? Colors.white
+                                          : _primary),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                             if (item['utama']) ...[
@@ -305,7 +308,7 @@ class _DaftarAlamatScreenState extends State<DaftarAlamatScreen> {
                                 ),
                               ),
                             ],
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             IconButton(
                               icon: const Icon(Icons.edit_outlined,
                                   color: _primary, size: 18),

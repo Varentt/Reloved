@@ -124,11 +124,15 @@ class RiwayatTransaksiScreen extends StatelessWidget {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(item['id'],
-                                      style: const TextStyle(
-                                          fontSize: 11,
-                                          color: _textSecondary,
-                                          fontWeight: FontWeight.w600)),
+                                  Flexible(
+                                    child: Text(item['id'],
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: _textSecondary,
+                                            fontWeight: FontWeight.w600),
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 3),
@@ -152,16 +156,22 @@ class RiwayatTransaksiScreen extends StatelessWidget {
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
-                                      color: _textPrimary)),
+                                      color: _textPrimary),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(item['tanggal'],
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: _textSecondary)),
+                                  Flexible(
+                                    child: Text(item['tanggal'],
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: _textSecondary),
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                  const SizedBox(width: 8),
                                   Text(
                                     'Rp ${_formatRupiah(item['harga'])}',
                                     style: const TextStyle(

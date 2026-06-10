@@ -67,17 +67,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
-      body: Row(
-        children: [
-          _SideNav(
-            selectedIndex: _selectedIndex,
-            onSelect: (i) => setState(() => _selectedIndex = i),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 700;
+        
+        if (isMobile) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF0F4F8),
+            appBar: AppBar(
+              backgroundColor: const Color(0xFF3B5B8A),
+              elevation: 0,
+              title: const Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              iconTheme: const IconThemeData(color: Colors.white),
+            ),
+            drawer: Drawer(
+              child: _SideNav(
+                selectedIndex: _selectedIndex,
+                onSelect: (i) {
+                  setState(() => _selectedIndex = i);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            body: _pages[_selectedIndex],
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF0F4F8),
+          body: Row(
+            children: [
+              _SideNav(
+                selectedIndex: _selectedIndex,
+                onSelect: (i) => setState(() => _selectedIndex = i),
+              ),
+              Expanded(child: _pages[_selectedIndex]),
+            ],
           ),
-          Expanded(child: _pages[_selectedIndex]),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -231,14 +259,16 @@ class _DashboardPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Selamat Datang,',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF7a8fa6))),
-                    Text('Admin Reloved',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1a2535))),
-                  ],
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Selamat Datang,',
+                          style: TextStyle(fontSize: 13, color: Color(0xFF7a8fa6))),
+                      Text('Admin Reloved',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1a2535))),
+                    ],
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -259,48 +289,55 @@ class _DashboardPage extends StatelessWidget {
             const SizedBox(height: 28),
 
             // Stat cards
-            Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.people_outline,
-                    label: 'Total Pengguna',
-                    value: '${_mockPengguna.length}',
-                    color: const Color(0xFF3B5B8A),
-                    onTap: () => onNavigate(1),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 160,
+                    child: _StatCard(
+                      icon: Icons.people_outline,
+                      label: 'Total Pengguna',
+                      value: '${_mockPengguna.length}',
+                      color: const Color(0xFF3B5B8A),
+                      onTap: () => onNavigate(1),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.inventory_2_outlined,
-                    label: 'Total Produk',
-                    value: '${_mockSemuaProduk.length}',
-                    color: const Color(0xFF3B5B8A),
-                    onTap: () => onNavigate(3),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 160,
+                    child: _StatCard(
+                      icon: Icons.inventory_2_outlined,
+                      label: 'Total Produk',
+                      value: '${_mockSemuaProduk.length}',
+                      color: const Color(0xFF3B5B8A),
+                      onTap: () => onNavigate(3),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.pending_outlined,
-                    label: 'Pending Verifikasi',
-                    value: '${_mockProdukPending.length}',
-                    color: const Color(0xFF3B5B8A),
-                    onTap: () => onNavigate(2),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 160,
+                    child: _StatCard(
+                      icon: Icons.pending_outlined,
+                      label: 'Pending Verifikasi',
+                      value: '${_mockProdukPending.length}',
+                      color: const Color(0xFF3B5B8A),
+                      onTap: () => onNavigate(2),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Total Transaksi',
-                    value: '${_mockTransaksi.length}',
-                    color: const Color(0xFF3B5B8A),
-                    onTap: () => onNavigate(4),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 160,
+                    child: _StatCard(
+                      icon: Icons.shopping_bag_outlined,
+                      label: 'Total Transaksi',
+                      value: '${_mockTransaksi.length}',
+                      color: const Color(0xFF3B5B8A),
+                      onTap: () => onNavigate(4),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -392,14 +429,17 @@ class _TotalProdukPage extends StatelessWidget {
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  _MiniStat(label: 'Total', value: '${_mockSemuaProduk.length}'),
-                  const SizedBox(width: 24),
-                  _MiniStat(label: 'Aktif', value: '$aktif'),
-                  const SizedBox(width: 24),
-                  _MiniStat(label: 'Terjual', value: '$terjual'),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _MiniStat(label: 'Total', value: '${_mockSemuaProduk.length}'),
+                    const SizedBox(width: 24),
+                    _MiniStat(label: 'Aktif', value: '$aktif'),
+                    const SizedBox(width: 24),
+                    _MiniStat(label: 'Terjual', value: '$terjual'),
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1, color: Color(0xFFD0E2F2)),
@@ -530,16 +570,19 @@ class _TotalTransaksiPage extends StatelessWidget {
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  _MiniStat(label: 'Total', value: '${_mockTransaksi.length}'),
-                  const SizedBox(width: 24),
-                  _MiniStat(label: 'Selesai', value: '$selesai'),
-                  const SizedBox(width: 24),
-                  _MiniStat(label: 'Dikirim', value: '$dikirim'),
-                  const SizedBox(width: 24),
-                  _MiniStat(label: 'Menunggu', value: '$menunggu'),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _MiniStat(label: 'Total', value: '${_mockTransaksi.length}'),
+                    const SizedBox(width: 24),
+                    _MiniStat(label: 'Selesai', value: '$selesai'),
+                    const SizedBox(width: 24),
+                    _MiniStat(label: 'Dikirim', value: '$dikirim'),
+                    const SizedBox(width: 24),
+                    _MiniStat(label: 'Menunggu', value: '$menunggu'),
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1, color: Color(0xFFD0E2F2)),
@@ -602,21 +645,24 @@ class _TotalTransaksiPage extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.person_outline, size: 13, color: Color(0xFF7a8fa6)),
-                                  const SizedBox(width: 4),
-                                  Text('Pembeli: ${t['pembeli']}',
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
-                                  const SizedBox(width: 16),
-                                  const Icon(Icons.store_outlined, size: 13, color: Color(0xFF7a8fa6)),
-                                  const SizedBox(width: 4),
-                                  Text('Penjual: ${t['penjual']}',
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
-                                  const Spacer(),
-                                  Text(t['tanggal']!,
-                                      style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
-                                ],
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.person_outline, size: 13, color: Color(0xFF7a8fa6)),
+                                    const SizedBox(width: 4),
+                                    Text('Pembeli: ${t['pembeli']}',
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
+                                    const SizedBox(width: 16),
+                                    const Icon(Icons.store_outlined, size: 13, color: Color(0xFF7a8fa6)),
+                                    const SizedBox(width: 4),
+                                    Text('Penjual: ${t['penjual']}',
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
+                                    const SizedBox(width: 16),
+                                    Text(t['tanggal']!,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF7a8fa6))),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

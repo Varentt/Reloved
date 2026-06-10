@@ -243,18 +243,21 @@ class _StatistikPenjualanScreenState extends State<StatistikPenjualanScreen> {
                           Text(item['nama'],
                               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
                           const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(Icons.person_outline, size: 12, color: _textSecondary),
-                              const SizedBox(width: 3),
-                              Text(item['pembeli'],
-                                  style: const TextStyle(fontSize: 11, color: _textSecondary)),
-                              const SizedBox(width: 10),
-                              const Icon(Icons.calendar_today_outlined, size: 11, color: _textSecondary),
-                              const SizedBox(width: 3),
-                              Text(item['tanggal'],
-                                  style: const TextStyle(fontSize: 11, color: _textSecondary)),
-                            ],
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.person_outline, size: 12, color: _textSecondary),
+                                const SizedBox(width: 3),
+                                Text(item['pembeli'],
+                                    style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                                const SizedBox(width: 10),
+                                const Icon(Icons.calendar_today_outlined, size: 11, color: _textSecondary),
+                                const SizedBox(width: 3),
+                                Text(item['tanggal'],
+                                    style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                              ],
+                            ),
                           ),
                         ],
                       ),
