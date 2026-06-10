@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/add_product_screen.dart';
 import 'package:reloved/screens/edit_product_screen.dart';
 
@@ -12,12 +17,16 @@ const _textSecondary = Color(0xFF7a8fa6);
 class MyProductsScreen extends StatelessWidget {
   const MyProductsScreen({super.key});
 
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)
+        .format(price);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final myProducts = [
-      {'name': 'Kemeja Flanel Uniqlo', 'price': 'Rp85.000', 'status': 'Aktif', 'views': '124'},
-      {'name': 'Sepatu Converse Bekas', 'price': 'Rp200.000', 'status': 'Terjual', 'views': '350'},
-    ];
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+    final productService = ProductService();
 
     return Scaffold(
       backgroundColor: _surface,
@@ -37,125 +46,162 @@ class MyProductsScreen extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: myProducts.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: _accent.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.inventory_2_outlined, size: 48, color: _primary),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Belum ada produk',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textPrimary)),
-                  const SizedBox(height: 6),
-                  const Text('Tambah produk pertamamu sekarang!',
-                      style: TextStyle(color: _textSecondary, fontSize: 13)),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: myProducts.length,
-              itemBuilder: (context, index) {
-                final product = myProducts[index];
-                final bool isSold = product['status'] == 'Terjual';
+      body: user == null
+          ? const Center(child: Text('Silakan login terlebih dahulu'))
+          : StreamBuilder<List<ProductModel>>(
+              stream: productService.getMyProducts(user.uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: _accent.withOpacity(0.4),
-                          borderRadius: BorderRadius.circular(10),
+                final myProducts = snapshot.data ?? [];
+
+                if (myProducts.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: _accent.withOpacity(0.4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.inventory_2_outlined, size: 48, color: _primary),
                         ),
-                        child: const Icon(Icons.image_outlined, color: _textSecondary),
+                        const SizedBox(height: 16),
+                        const Text('Belum ada produk',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textPrimary)),
+                        const SizedBox(height: 6),
+                        const Text('Tambah produk pertamamu sekarang!',
+                            style: TextStyle(color: _textSecondary, fontSize: 13)),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: myProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = myProducts[index];
+                    final bool isSold = product.status == 'Terjual';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
+                        ],
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Container(
+                            height: 80,
+                            width: 80,
+                            decoration: BoxDecoration(
+                              color: _accent.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: product.imageUrl.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(product.imageUrl, fit: BoxFit.cover),
+                                  )
+                                : const Icon(Icons.image_outlined, color: _textSecondary),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isSold ? _surface : _accent.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Text(
-                                    product['status']!,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: isSold ? _textSecondary : _primary,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isSold ? _surface : _accent.withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        product.status,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSold ? _textSecondary : _primary,
+                                        ),
+                                      ),
                                     ),
+                                    const Text('Dilihat', // Placeholder views
+                                        style: TextStyle(fontSize: 10, color: _textSecondary)),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(product.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                                Text(_formatRupiah(product.price),
+                                    style: const TextStyle(
+                                        color: _primary, fontWeight: FontWeight.w800, fontSize: 13)),
+                                const SizedBox(height: 10),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _SmallButton(
+                                        icon: Icons.edit_outlined,
+                                        label: 'Edit',
+                                        onTap: () => Navigator.push(context,
+                                            MaterialPageRoute(builder: (_) => const EditProductScreen())),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _SmallButton(
+                                        icon: Icons.delete_outline,
+                                        label: 'Hapus',
+                                        onTap: () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: const Text('Hapus Produk'),
+                                              content: const Text('Yakin ingin menghapus iklan ini?'),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+                                                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Hapus', style: TextStyle(color: Colors.red))),
+                                              ],
+                                            ),
+                                          );
+                                          if (confirm == true) {
+                                            await productService.deleteProduct(product.id);
+                                          }
+                                        },
+                                        isDestructive: true,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      if (!isSold)
+                                        _SmallButton(
+                                          icon: Icons.check_circle_outline,
+                                          label: 'Tandai Terjual',
+                                          onTap: () async {
+                                            await productService.updateProductStatus(product.id, 'Terjual');
+                                          },
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                Text('${product['views']} Dilihat',
-                                    style: const TextStyle(fontSize: 10, color: _textSecondary)),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(product['name']!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
-                            Text(product['price']!,
-                                style: const TextStyle(
-                                    color: _primary, fontWeight: FontWeight.w800, fontSize: 13)),
-                            const SizedBox(height: 10),
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  _SmallButton(
-                                    icon: Icons.edit_outlined,
-                                    label: 'Edit',
-                                    onTap: () => Navigator.push(context,
-                                        MaterialPageRoute(builder: (_) => const EditProductScreen())),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _SmallButton(
-                                    icon: Icons.delete_outline,
-                                    label: 'Hapus',
-                                    onTap: () {},
-                                    isDestructive: true,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (!isSold)
-                                    _SmallButton(
-                                      icon: Icons.check_circle_outline,
-                                      label: 'Tandai Terjual',
-                                      onTap: () {},
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),

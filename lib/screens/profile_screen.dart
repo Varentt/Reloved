@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/models/order_model.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/order_service.dart';
+import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/my_products_screen.dart';
 import 'package:reloved/screens/login_screen.dart';
 import 'package:reloved/screens/riwayat_transaksi_screen.dart';
@@ -18,6 +24,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       backgroundColor: _surface,
       body: SingleChildScrollView(
@@ -31,7 +40,6 @@ class ProfileScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-
               ),
               child: SafeArea(
                 bottom: false,
@@ -77,17 +85,29 @@ class ProfileScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Nama Lengkap',
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                                Text(user?.name ?? 'Nama Lengkap',
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                                 const SizedBox(height: 2),
-                                const Text('user@email.com',
-                                    style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text(user?.email ?? 'user@email.com',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
-                                    _StatBadge(label: 'Pembelian', value: '12'),
+                                    StreamBuilder<List<OrderModel>>(
+                                      stream: OrderService().getBuyerOrders(user?.uid ?? ''),
+                                      builder: (context, snapshot) {
+                                        final count = snapshot.data?.length ?? 0;
+                                        return _StatBadge(label: 'Pembelian', value: '$count');
+                                      }
+                                    ),
                                     const SizedBox(width: 10),
-                                    _StatBadge(label: 'Penjualan', value: '5'),
+                                    StreamBuilder<List<ProductModel>>(
+                                      stream: ProductService().getMyProducts(user?.uid ?? ''),
+                                      builder: (context, snapshot) {
+                                        final count = snapshot.data?.length ?? 0;
+                                        return _StatBadge(label: 'Penjualan', value: '$count');
+                                      }
+                                    ),
                                   ],
                                 ),
                               ],
@@ -156,7 +176,7 @@ class ProfileScreen extends StatelessWidget {
               iconColor: Colors.red,
               textColor: Colors.red,
               showArrow: false,
-              onTap: () => _confirmLogout(context),
+              onTap: () => _confirmLogout(context, authProvider),
             ),
 
             const SizedBox(height: 40),
@@ -166,7 +186,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _confirmLogout(BuildContext context) {
+  void _confirmLogout(BuildContext context, AuthProvider authProvider) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -179,10 +199,16 @@ class ProfileScreen extends StatelessWidget {
             child: const Text('Batal', style: TextStyle(color: _primary)),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()));
+            onPressed: () async {
+              await authProvider.logout();
+              if (context.mounted) {
+                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

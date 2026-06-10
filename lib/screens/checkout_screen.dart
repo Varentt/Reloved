@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/models/order_model.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/order_service.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -12,18 +17,17 @@ class CheckoutScreen extends StatefulWidget {
 
   const CheckoutScreen({super.key, required this.products});
 
-  factory CheckoutScreen.fromProduct(Map<String, String> product, {int qty = 1}) {
+  factory CheckoutScreen.fromProductModel(ProductModel product, {int qty = 1}) {
     return CheckoutScreen(
       products: [
         {
-          'name': product['name'] ?? '',
-          'price': int.tryParse(product['price']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0,
-          'normalPrice': product['normalPrice'] ?? '',
-          'badge': product['badge'] ?? 'SECOND',
-          'loc': product['loc'] ?? '-',
-          'seller': 'Nama Penjual',
+          'id': product.id,
+          'ownerId': product.ownerId,
+          'name': product.name,
+          'price': product.price,
+          'badge': product.category,
           'qty': qty,
-          'selected': true,
+          'seller': 'Reloved Seller',
         }
       ],
     );
@@ -34,6 +38,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  bool _isProcessing = false;
   int _selectedAddress = 0;
   int _selectedPayment = 0;
 
@@ -72,6 +77,54 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return buf.toString();
   }
 
+  void _handleConfirmOrder() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.user;
+
+    if (user == null) return;
+
+    setState(() => _isProcessing = true);
+
+    final orderService = OrderService();
+    bool success = true;
+
+    for (var p in widget.products) {
+      final order = OrderModel(
+        id: '',
+        buyerId: user.uid,
+        sellerId: p['ownerId'],
+        productId: p['id'],
+        productName: p['name'],
+        price: p['price'],
+        status: 'Pending',
+        createdAt: DateTime.now(),
+      );
+
+      final error = await orderService.createOrder(order);
+      if (error != null) {
+        success = false;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal membuat pesanan: $error'), backgroundColor: Colors.redAccent),
+          );
+        }
+        break;
+      }
+    }
+
+    setState(() => _isProcessing = false);
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pesanan berhasil dibuat!'),
+          backgroundColor: Color(0xFF2e7d32),
+        ),
+      );
+      Navigator.popUntil(context, (route) => route.isFirst);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sellerName = widget.products.first['seller'] as String;
@@ -102,7 +155,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Ringkasan Produk ──
                   const _SectionTitle(title: 'Ringkasan Produk'),
                   Container(
                     margin: const EdgeInsets.only(bottom: 10),
@@ -199,8 +251,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
 
                   const SizedBox(height: 20),
-
-                  // ── Alamat Pengiriman ──
                   const _SectionTitle(title: 'Alamat Pengiriman'),
                   ...List.generate(_addresses.length, (i) {
                     final addr = _addresses[i];
@@ -267,11 +317,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     );
                   }),
-                  // Tombol "Tambah Alamat Baru" dihapus
 
                   const SizedBox(height: 20),
-
-                  // ── Metode Pembayaran ──
                   const _SectionTitle(title: 'Metode Pembayaran'),
                   ...List.generate(_payments.length, (i) {
                     final pay = _payments[i];
@@ -325,8 +372,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   }),
 
                   const SizedBox(height: 20),
-
-                  // ── Rincian Harga ──
                   const _SectionTitle(title: 'Rincian Harga'),
                   Container(
                     decoration: BoxDecoration(
@@ -355,14 +400,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
-
-          // ── Tombol Konfirmasi ──
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: BoxDecoration(
@@ -387,7 +429,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => _showConfirmDialog(context),
+                    onPressed: _isProcessing ? null : () => _showConfirmDialog(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _primary,
                       foregroundColor: Colors.white,
@@ -395,7 +437,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Konfirmasi Pesanan',
+                    child: _isProcessing 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Konfirmasi Pesanan',
                         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   ),
                 ),
@@ -422,15 +466,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Pesanan berhasil dibuat!'),
-                  backgroundColor: const Color(0xFF2e7d32),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              );
-              Navigator.pop(context);
+              _handleConfirmOrder();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _primary,

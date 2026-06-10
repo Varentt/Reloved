@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/models/order_model.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/order_service.dart';
 import 'package:reloved/screens/order_detail_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
@@ -30,10 +35,7 @@ class OrderScreen extends StatelessWidget {
           ),
           backgroundColor: _primary,
           title: const Text('Pesanan Saya',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18)),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
           bottom: const TabBar(
             indicatorColor: Colors.white,
             indicatorWeight: 3,
@@ -57,402 +59,175 @@ class OrderScreen extends StatelessWidget {
   }
 }
 
-class _OrderList extends StatefulWidget {
+class _OrderList extends StatelessWidget {
   const _OrderList({required this.type});
   final String type;
 
-  @override
-  State<_OrderList> createState() => _OrderListState();
-}
-
-class _OrderListState extends State<_OrderList> {
-  late List<Map<String, String>> _orders;
-
-  @override
-  void initState() {
-    super.initState();
-    _orders = widget.type == 'pembelian'
-        ? [
-            {
-              'inv': 'INV-2026001',
-              'name': 'Kemeja Flanel Uniqlo',
-              'price': 'Rp85.000',
-              'status': 'Dikirim',
-              'date': '24 Mei 2026',
-              'seller': 'Reloved Store',
-            },
-            {
-              'inv': 'INV-2026002',
-              'name': 'Buku Harry Potter',
-              'price': 'Rp45.000',
-              'status': 'Selesai',
-              'date': '20 Mei 2026',
-              'seller': 'Toko Buku Lama',
-            },
-            {
-              'inv': 'INV-2026003',
-              'name': 'Roti Sobek',
-              'price': 'Rp5.000',
-              'status': 'Menunggu Konfirmasi',
-              'date': '25 Mei 2026',
-              'seller': 'Mega Store',
-            },
-            {
-              'inv': 'INV-2026006',
-              'name': 'Kaos Polos Hitam',
-              'price': 'Rp35.000',
-              'status': 'Dikemas',
-              'date': '26 Mei 2026',
-              'seller': 'Thrift Corner',
-            },
-          ]
-        : [
-            {
-              'inv': 'INV-2026004',
-              'name': 'Kamera Analog Canon',
-              'price': 'Rp450.000',
-              'status': 'Perlu Dikirim',
-              'date': '25 Mei 2026',
-              'buyer': 'Budi S.',
-            },
-            {
-              'inv': 'INV-2026005',
-              'name': 'Sepatu Vans Second',
-              'price': 'Rp150.000',
-              'status': 'Selesai',
-              'date': '18 Mei 2026',
-              'buyer': 'Sari D.',
-            },
-            {
-              'inv': 'INV-2026007',
-              'name': 'Mouse Logitech',
-              'price': 'Rp45.000',
-              'status': 'Dikemas',
-              'date': '26 Mei 2026',
-              'buyer': 'Rina A.',
-            },
-          ];
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(price);
   }
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'Selesai':
-        return _textSecondary;
-      case 'Dikirim':
-        return _primary;
-      case 'Dikemas':
-        return _primary;
-      case 'Perlu Dikirim':
-        return const Color(0xFFE65100);
-      case 'Menunggu Konfirmasi':
-        return const Color(0xFFE65100);
-      default:
-        return _textSecondary;
+      case 'Selesai': return Colors.green;
+      case 'Dikirim': return Colors.blue;
+      case 'Diproses': return Colors.orange;
+      case 'Pending': return Colors.orange;
+      default: return _textSecondary;
     }
-  }
-
-  bool _hasAction(String type, String status) {
-    if (type == 'penjualan' && status == 'Perlu Dikirim') return true;
-    if (type == 'pembelian' && status == 'Dikirim') return true;
-    return false;
-  }
-
-  // Popup konfirmasi untuk pembeli
-  void _showKonfirmasiTerima(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Pesanan Diterima',
-          style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 16, color: _textPrimary),
-        ),
-        content: const Text(
-          'Apakah kamu sudah menerima barang dengan kondisi baik?',
-          style: TextStyle(color: _textSecondary, fontSize: 13, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal',
-                style: TextStyle(color: _textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() {
-                _orders[index] = {..._orders[index], 'status': 'Selesai'};
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Pesanan telah dikonfirmasi selesai!'),
-                  backgroundColor: Color(0xFF2e7d32),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2e7d32),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Ya, Sudah Diterima'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Popup konfirmasi untuk penjual kirim barang
-  void _showKonfirmasiKirim(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Kirim Barang',
-          style: TextStyle(
-              fontWeight: FontWeight.w800, fontSize: 16, color: _textPrimary),
-        ),
-        content: const Text(
-          'Konfirmasi bahwa kamu sudah mengirimkan barang ke pembeli?',
-          style: TextStyle(color: _textSecondary, fontSize: 13, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal',
-                style: TextStyle(color: _textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              setState(() {
-                _orders[index] = {..._orders[index], 'status': 'Dikirim'};
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Barang berhasil dikonfirmasi dikirim!'),
-                  backgroundColor: _primary,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Ya, Sudah Dikirim'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_orders.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: _accent.withOpacity(0.4),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.assignment_outlined,
-                  size: 48, color: _primary),
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+    if (user == null) return const Center(child: Text('Silakan login'));
+
+    final orderService = OrderService();
+    final stream = type == 'pembelian' 
+        ? orderService.getBuyerOrders(user.uid) 
+        : orderService.getSellerOrders(user.uid);
+
+    return StreamBuilder<List<OrderModel>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final orders = snapshot.data ?? [];
+
+        if (orders.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: _accent.withOpacity(0.4), shape: BoxShape.circle),
+                  child: const Icon(Icons.assignment_outlined, size: 48, color: _primary),
+                ),
+                const SizedBox(height: 16),
+                const Text('Belum ada transaksi',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: _textPrimary)),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text('Belum ada transaksi',
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: _textPrimary)),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: _orders.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, i) {
-        final o = _orders[i];
-        final statusColor = _statusColor(o['status']!);
-        final hasAction = _hasAction(widget.type, o['status']!);
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: orders.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, i) {
+            final o = orders[i];
+            final statusColor = _statusColor(o.status);
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3)),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Header: nomor invoice + status badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _surface,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(o['inv']!,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _textSecondary)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border:
-                            Border.all(color: statusColor.withOpacity(0.3)),
-                      ),
-                      child: Text(o['status']!,
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: statusColor)),
-                    ),
-                  ],
-                ),
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 3)),
+                ],
               ),
-
-              // Info produk
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: _accent.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.image_outlined,
-                          color: _textSecondary, size: 28),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _surface,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(o['name']!,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: _textPrimary)),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.type == 'pembelian'
-                                ? 'Penjual: ${o['seller']}'
-                                : 'Pembeli: ${o['buyer']}',
-                            style: const TextStyle(
-                                fontSize: 12, color: _textSecondary),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('INV/${o.createdAt.year}/${o.createdAt.month}/${o.id.substring(0, 5).toUpperCase()}',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _textSecondary)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: statusColor.withOpacity(0.3)),
                           ),
-                          const SizedBox(height: 4),
-                          Text(o['price']!,
-                              style: const TextStyle(
-                                  color: _primary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14)),
-                        ],
-                      ),
+                          child: Text(o.status,
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor)),
+                        ),
+                      ],
                     ),
-                    Text(o['date']!,
-                        style: const TextStyle(
-                            fontSize: 11, color: _textSecondary)),
-                  ],
-                ),
-              ),
-
-              const Divider(height: 1, color: _surface),
-
-              // Tombol aksi
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => OrderDetailScreen(
-                            order: o,
-                            type: widget.type,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 60, height: 60,
+                          decoration: BoxDecoration(color: _accent.withOpacity(0.4), borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.image_outlined, color: _textSecondary),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(o.productName,
+                                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                              const SizedBox(height: 4),
+                              Text(_formatRupiah(o.price),
+                                  style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 14)),
+                            ],
                           ),
                         ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _primary,
-                        side: const BorderSide(color: _primary),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                      ),
-                      child: const Text('Lihat Detail',
-                          style: TextStyle(fontSize: 12)),
+                        Text('${o.createdAt.day}/${o.createdAt.month}',
+                            style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                      ],
                     ),
-                    if (hasAction) ...[
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (widget.type == 'pembelian') {
-                            _showKonfirmasiTerima(context, i);
-                          } else {
-                            _showKonfirmasiKirim(context, i);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.type == 'pembelian'
-                              ? const Color(0xFF2e7d32)
-                              : _primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                  ),
+                  const Divider(height: 1, color: _surface),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (type == 'pembelian' && o.status == 'Dikirim')
+                          ElevatedButton(
+                            onPressed: () => _updateStatus(context, orderService, o.id, 'Selesai'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            child: const Text('Pesanan Diterima'),
+                          ),
+                        if (type == 'penjualan' && (o.status == 'Pending' || o.status == 'Diproses'))
+                          ElevatedButton(
+                            onPressed: () => _updateStatus(context, orderService, o.id, 'Dikirim'),
+                            style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.white),
+                            child: const Text('Kirim Barang'),
+                          ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: () {
+                            // Detail logic placeholder
+                          },
+                          child: const Text('Detail'),
                         ),
-                        child: Text(
-                          widget.type == 'pembelian'
-                              ? 'Pesanan Diterima'
-                              : 'Kirim Barang',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  void _updateStatus(BuildContext context, OrderService service, String id, String status) async {
+    await service.updateOrderStatus(id, status);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Status pesanan diperbarui ke $status')),
+      );
+    }
   }
 }

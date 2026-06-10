@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/models/user_model.dart';
+import 'package:reloved/services/auth_service.dart';
 import 'package:reloved/screens/checkout_screen.dart';
-import 'package:reloved/utils/cart_manager.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -10,7 +13,7 @@ const _textPrimary = Color(0xFF1a2535);
 const _textSecondary = Color(0xFF7a8fa6);
 
 class ProductDetailScreen extends StatefulWidget {
-  final Map<String, String> product;
+  final ProductModel product;
 
   const ProductDetailScreen({super.key, required this.product});
 
@@ -22,27 +25,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFavorite = false;
   int _qty = 1;
 
-  int get _stok {
-    try {
-      return int.parse(widget.product['stok'] ?? '1');
-    } catch (_) {
-      return 1;
-    }
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(price);
   }
 
-  Color get _badgeColor => _primary;
+  Color get _badgeColor {
+    final cat = widget.product.category.toLowerCase();
+    if (cat.contains('second')) return Colors.blue;
+    if (cat.contains('reject')) return Colors.orange;
+    if (cat.contains('expired')) return Colors.red;
+    return _primary;
+  }
 
   String get _discountLabel {
-    try {
-      final price = int.parse(
-          widget.product['price']!.replaceAll(RegExp(r'[^0-9]'), ''));
-      final normal = int.parse(
-          widget.product['normalPrice']!.replaceAll(RegExp(r'[^0-9]'), ''));
-      final pct = ((normal - price) / normal * 100).round();
-      return 'Hemat $pct%';
-    } catch (_) {
-      return 'Hemat';
-    }
+    if (widget.product.normalPrice <= widget.product.price) return 'Hemat';
+    final pct = ((widget.product.normalPrice - widget.product.price) / widget.product.normalPrice * 100).round();
+    return 'Hemat $pct%';
   }
 
   @override
@@ -60,20 +58,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 backgroundColor: _primary,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _accent.withOpacity(0.6),
-                          _accent.withOpacity(0.3),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.image_outlined,
-                          size: 80, color: _textSecondary),
-                    ),
+                    decoration: BoxDecoration(color: _accent.withOpacity(0.3)),
+                    child: p.imageUrl.isNotEmpty
+                        ? Image.network(p.imageUrl, fit: BoxFit.cover)
+                        : const Center(child: Icon(Icons.image_outlined, size: 80, color: _textSecondary)),
                   ),
                 ),
                 leading: Padding(
@@ -81,8 +69,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   child: CircleAvatar(
                     backgroundColor: Colors.white.withOpacity(0.9),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: _textPrimary, size: 18),
+                      icon: const Icon(Icons.arrow_back, color: _textPrimary, size: 18),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -98,14 +85,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           color: _isFavorite ? Colors.red : _textPrimary,
                           size: 18,
                         ),
-                        onPressed: () =>
-                            setState(() => _isFavorite = !_isFavorite),
+                        onPressed: () => setState(() => _isFavorite = !_isFavorite),
                       ),
                     ),
                   ),
                 ],
               ),
-
               SliverToBoxAdapter(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -120,79 +105,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _badgeColor,
-                                borderRadius: BorderRadius.circular(7),
-                              ),
-                              child: Text(p['badge'] ?? 'SECOND',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 11)),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(color: _badgeColor, borderRadius: BorderRadius.circular(7)),
+                              child: Text(p.category.toUpperCase(),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11)),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: Colors.green.shade50,
                                 borderRadius: BorderRadius.circular(7),
                                 border: Border.all(color: Colors.green.shade200),
                               ),
                               child: Text(_discountLabel,
-                                  style: const TextStyle(
-                                      color: Color(0xFF2e7d32),
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11)),
+                                  style: const TextStyle(color: Color(0xFF2e7d32), fontWeight: FontWeight.w700, fontSize: 11)),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 12),
-                        Text(p['name'] ?? 'Nama Produk',
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: _textPrimary)),
+                        Text(p.name,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: _textPrimary)),
                         const SizedBox(height: 8),
-                        Text(p['normalPrice'] ?? '',
-                            style: const TextStyle(
-                                decoration: TextDecoration.lineThrough,
-                                color: _textSecondary,
-                                fontSize: 14)),
-                        Text(p['price'] ?? 'Rp 0',
-                            style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: _primary)),
-
+                        if (p.normalPrice > 0)
+                          Text(_formatRupiah(p.normalPrice),
+                              style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 14)),
+                        Text(_formatRupiah(p.price),
+                            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: _primary)),
                         const SizedBox(height: 16),
                         const Divider(color: _surface),
                         const SizedBox(height: 12),
-
                         Container(
                           padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: _surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          decoration: BoxDecoration(color: _surface, borderRadius: BorderRadius.circular(12)),
                           child: Column(
                             children: [
-                              _InfoRow('Kondisi', 'Sangat Baik'),
+                              _InfoRow('Kondisi', p.condition),
                               const SizedBox(height: 8),
-                              _InfoRow('Kategori', _badgeLabel(p['badge'])),
+                              _InfoRow('Lokasi', p.location),
                               const SizedBox(height: 8),
-                              _InfoRow('Lokasi', p['loc'] ?? '-'),
-                              const SizedBox(height: 8),
-                              _InfoRow('Stok', '${p['stok'] ?? '1'} tersedia'),
+                              _InfoRow('Diterbitkan', '${p.createdAt.day}/${p.createdAt.month}/${p.createdAt.year}'),
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
+                        // ── Info Penjual ──
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -200,117 +157,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: _accent),
                           ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 22,
-                                backgroundColor: _accent,
-                                child: const Icon(Icons.person,
-                                    color: _primary, size: 24),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Nama Penjual',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            color: _textPrimary)),
-                                    Text('Aktif 2 jam yang lalu',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: _textSecondary)),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: FutureBuilder<UserModel?>(
+                            future: AuthService().getUserData(p.ownerId),
+                            builder: (context, snapshot) {
+                              final seller = snapshot.data;
+                              return Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: _accent,
+                                    child: const Icon(Icons.person, color: _primary, size: 24),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(seller?.name ?? 'Memuat Penjual...',
+                                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                                        const Text('Penjual Terverifikasi',
+                                            style: TextStyle(fontSize: 12, color: _textSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
                           ),
                         ),
-
                         const SizedBox(height: 16),
                         const Divider(color: _surface),
                         const SizedBox(height: 12),
-
                         const Text('Deskripsi Produk',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: _textPrimary)),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _textPrimary)),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Kondisi: Bekas (Sangat Baik)\n\n'
-                          'Produk masih layak digunakan dan berada dalam kondisi baik. '
-                          'Harga telah disesuaikan sehingga lebih hemat dibanding harga normal. '
-                          'Cocok untuk pengguna yang ingin berbelanja lebih ekonomis dan ramah lingkungan. '
-                          'Kelengkapan masih ada semua. Nego tipis-tipis boleh.',
-                          style: TextStyle(
-                              color: _textSecondary, height: 1.6, fontSize: 13),
+                        Text(
+                          p.description.isNotEmpty ? p.description : 'Tidak ada deskripsi untuk produk ini.',
+                          style: const TextStyle(color: _textSecondary, height: 1.6, fontSize: 13),
                         ),
-
-                        const SizedBox(height: 16),
-                        const Divider(color: _surface),
-                        const SizedBox(height: 12),
-
-                        // ── Qty Selector ──
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Jumlah',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: _textPrimary)),
-                            Row(
-                              children: [
-                                Text('Stok: $_stok',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: _textSecondary)),
-                                const SizedBox(width: 16),
-                                GestureDetector(
-                                  onTap: () {
-                                    if (_qty > 1) setState(() => _qty--);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: _qty > 1 ? _accent : _accent.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(Icons.remove,
-                                        size: 16,
-                                        color: _qty > 1 ? _primary : _textSecondary),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: Text('$_qty',
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w800,
-                                          color: _textPrimary)),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    if (_qty < _stok) setState(() => _qty++);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: _qty < _stok ? _accent : _accent.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(Icons.add,
-                                        size: 16,
-                                        color: _qty < _stok ? _primary : _textSecondary),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
                         const SizedBox(height: 120),
                       ],
                     ),
@@ -319,8 +203,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ],
           ),
-
-          // ── Tombol bawah fixed ──
           Positioned(
             bottom: 0,
             left: 0,
@@ -330,64 +212,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
-                  BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, -4)),
+                  BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, -4)),
                 ],
               ),
               child: Row(
                 children: [
-                  // Tombol Keranjang
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        CartManager().addProduct(widget.product, qty: _qty);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('$_qty produk ditambahkan ke keranjang'),
-                            backgroundColor: _primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fitur Keranjang segera hadir')));
                       },
                       icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                      label: const Text('Keranjang',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14)),
+                      label: const Text('Keranjang', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primary,
                         side: const BorderSide(color: _primary, width: 1.5),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Tombol Beli Sekarang
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => CheckoutScreen.fromProduct(
-                              widget.product, qty: _qty),
-                        ),
+                        MaterialPageRoute(builder: (_) => CheckoutScreen.fromProductModel(p, qty: _qty)),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Beli Sekarang',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15)),
+                      child: const Text('Beli Sekarang', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                     ),
                   ),
                 ],
@@ -397,17 +256,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
       ),
     );
-  }
-
-  String _badgeLabel(String? badge) {
-    switch (badge) {
-      case 'REJECT':
-        return 'Produk Reject';
-      case 'EXPIRED':
-        return 'Hampir Expired';
-      default:
-        return 'Barang Second';
-    }
   }
 }
 
@@ -428,10 +276,7 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             value,
             textAlign: TextAlign.right,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: _textPrimary),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: _textPrimary),
           ),
         ),
       ],

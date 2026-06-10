@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/product_detail_screen.dart';
 import 'package:reloved/screens/product_category_screen.dart';
 import 'package:reloved/screens/notification_screen.dart';
 import 'package:reloved/screens/cart_screen.dart';
-import 'package:reloved/screens/my_products_screen.dart';
-import 'package:reloved/screens/favorite_screen.dart'; // ← tambah import
+import 'package:reloved/screens/favorite_screen.dart';
 import 'package:reloved/screens/add_product_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
@@ -22,50 +24,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _products = [
-    {
-      'name': 'Sepatu Vans Second',
-      'price': 'Rp150.000',
-      'normalPrice': 'Rp300.000',
-      'loc': 'Malang',
-      'badge': 'SECOND',
-    },
-    {
-      'name': 'Mouse Logitech Reject',
-      'price': 'Rp45.000',
-      'normalPrice': 'Rp90.000',
-      'loc': 'Surabaya',
-      'badge': 'REJECT',
-    },
-    {
-      'name': 'Roti Sobek',
-      'price': 'Rp5.000',
-      'normalPrice': 'Rp12.000',
-      'loc': 'Jember',
-      'badge': 'EXPIRED',
-    },
-    {
-      'name': 'Kaos Uniqlo',
-      'price': 'Rp50.000',
-      'normalPrice': 'Rp120.000',
-      'loc': 'Banyuwangi',
-      'badge': 'SECOND',
-    },
-    {
-      'name': 'Keyboard Mechanical',
-      'price': 'Rp120.000',
-      'normalPrice': 'Rp250.000',
-      'loc': 'Malang',
-      'badge': 'REJECT',
-    },
-    {
-      'name': 'Susu UHT',
-      'price': 'Rp3.000',
-      'normalPrice': 'Rp8.000',
-      'loc': 'Banyuwangi',
-      'badge': 'EXPIRED',
-    },
-  ];
+  final _productService = ProductService();
+
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)
+        .format(price);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +71,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const Spacer(),
-                      // ── PERUBAHAN 1: tambah ikon favorit di sini ──
                       _topIconBtn(Icons.favorite_border, () {
                         Navigator.push(
                           context,
@@ -165,7 +128,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: RefreshIndicator(
                 color: _primary,
-                onRefresh: () async {},
+                onRefresh: () async {
+                  setState(() {});
+                },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
@@ -246,49 +211,73 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // Grid
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
-                          const padding = 16.0;
-                          const spacing = 8.0;
-                          final cardWidth =
-                              (constraints.maxWidth -
-                                  padding * 2 -
-                                  spacing * (crossAxisCount - 1)) /
-                              crossAxisCount;
-                          // Sesuaikan tinggi agar konten tidak overflow bawah
-                          final cardHeight = cardWidth + 80.0;
-                          final ratio = cardWidth / cardHeight;
+                      // Grid (Real-time dari Firestore)
+                      StreamBuilder<List<ProductModel>>(
+                        stream: _productService.activeProductsStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(color: _primary),
+                              ),
+                            );
+                          }
+                          
+                          final products = snapshot.data ?? [];
+                          
+                          if (products.isEmpty) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 60),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.inventory_2_outlined, size: 50, color: _textSecondary),
+                                    SizedBox(height: 12),
+                                    Text('Belum ada barang yang dijual', 
+                                    style: TextStyle(color: _textSecondary, fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: padding,
-                            ),
-                            child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+                              const padding = 16.0;
+                              const spacing = 8.0;
+                              final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
+                              final cardHeight = cardWidth + 80.0;
+                              final ratio = cardWidth / cardHeight;
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: padding),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: crossAxisCount,
                                     childAspectRatio: ratio,
                                     crossAxisSpacing: spacing,
                                     mainAxisSpacing: spacing,
                                   ),
-                              itemCount: _products.length,
-                              itemBuilder: (context, i) => _ProductCard(
-                                product: _products[i],
-                                cardWidth: cardWidth,
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ProductDetailScreen(
-                                      product: _products[i],
+                                  itemCount: products.length,
+                                  itemBuilder: (context, i) => _ProductCard(
+                                    product: products[i],
+                                    cardWidth: cardWidth,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProductDetailScreen(
+                                          product: products[i],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -349,54 +338,44 @@ class _BannerSliderState extends State<_BannerSlider> {
       'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
     },
     {
-      'title': 'Produk Reject\nHarga Terjangkau',
-      'sub': 'Kualitas oke, harga lebih hemat',
+      'title': 'Produk Reject\nHarga Super Miring',
+      'sub': 'Cacat minim, fungsi tetap terjamin',
       'icon': Icons.inventory_2_outlined,
-      'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
+      'colors': [Color(0xFF3B5B8A), Color(0xFF4a6fa0)],
     },
     {
-      'title': 'Makanan Hampir\nExpired Murah!',
-      'sub': 'Jangan buang makanan, hemat bersama',
+      'title': 'Makanan Hampir\nExpired? Diskon Gede!',
+      'sub': 'Bantu kurangi limbah makanan kita',
       'icon': Icons.fastfood_outlined,
-      'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
+      'colors': [Color(0xFF2e4a73), Color(0xFF4a6fa0)],
     },
   ];
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         SizedBox(
-          height: 140,
+          height: 150,
           child: PageView.builder(
             controller: _ctrl,
+            onPageChanged: (v) => setState(() => _page = v),
             itemCount: _banners.length,
-            onPageChanged: (i) => setState(() => _page = i),
-            itemBuilder: (_, i) {
+            itemBuilder: (context, i) {
               final b = _banners[i];
-              final colors = b['colors'] as List<Color>;
               return Container(
-                margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 14,
-                ),
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
                   gradient: LinearGradient(
-                    colors: colors,
+                    colors: b['colors'] as List<Color>,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: colors[1].withOpacity(0.3),
+                      color: (b['colors'] as List<Color>)[0].withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -413,44 +392,17 @@ class _BannerSliderState extends State<_BannerSlider> {
                             b['title'] as String,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              height: 1.3,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 6),
                           Text(
                             b['sub'] as String,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 11,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AddProductScreen(),
-                              ),
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF3B8AB1),
-                                borderRadius: BorderRadius.circular(7),
-                              ),
-                              child: const Text(
-                                'Jual Sekarang',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
-                              ),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
                             ),
                           ),
                         ],
@@ -458,8 +410,8 @@ class _BannerSliderState extends State<_BannerSlider> {
                     ),
                     Icon(
                       b['icon'] as IconData,
-                      size: 56,
                       color: Colors.white.withOpacity(0.2),
+                      size: 70,
                     ),
                   ],
                 ),
@@ -472,13 +424,13 @@ class _BannerSliderState extends State<_BannerSlider> {
           children: List.generate(
             _banners.length,
             (i) => AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
-              width: _page == i ? 16 : 6,
-              height: 6,
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 4,
+              width: _page == i ? 16 : 4,
               decoration: BoxDecoration(
                 color: _page == i ? _primary : _accent,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
@@ -552,11 +504,22 @@ class _ProductCard extends StatelessWidget {
     required this.cardWidth,
     required this.onTap,
   });
-  final Map<String, String> product;
+  final ProductModel product;
   final double cardWidth;
   final VoidCallback onTap;
 
-  Color get _badgeColor => _primary;
+  Color get _badgeColor {
+    final cat = product.category.toLowerCase();
+    if (cat.contains('second')) return Colors.blue;
+    if (cat.contains('reject')) return Colors.orange;
+    if (cat.contains('expired')) return Colors.red;
+    return _primary;
+  }
+
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)
+        .format(price);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -591,13 +554,15 @@ class _ProductCard extends StatelessWidget {
                         top: Radius.circular(10),
                       ),
                     ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        size: 22,
-                        color: _textSecondary,
-                      ),
-                    ),
+                    child: product.imageUrl.isNotEmpty
+                      ? Image.network(product.imageUrl, fit: BoxFit.cover)
+                      : const Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 22,
+                            color: _textSecondary,
+                          ),
+                        ),
                   ),
                   Positioned(
                     top: 3,
@@ -612,7 +577,7 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: Text(
-                        product['badge']!,
+                        product.category.split(' ').last.toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 6,
@@ -621,7 +586,6 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // ── PERUBAHAN 2: ikon hati non-interaktif (IgnorePointer) ──
                   Positioned(
                     top: 3,
                     right: 3,
@@ -650,7 +614,7 @@ class _ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product['name']!,
+                    product.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -661,16 +625,17 @@ class _ProductCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    product['normalPrice']!,
-                    style: const TextStyle(
-                      decoration: TextDecoration.lineThrough,
-                      color: _textSecondary,
-                      fontSize: 8,
+                  if (product.normalPrice > 0)
+                    Text(
+                      _formatRupiah(product.normalPrice),
+                      style: const TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        color: _textSecondary,
+                        fontSize: 8,
+                      ),
                     ),
-                  ),
                   Text(
-                    product['price']!,
+                    _formatRupiah(product.price),
                     style: const TextStyle(
                       color: _primary,
                       fontWeight: FontWeight.w800,
@@ -688,7 +653,7 @@ class _ProductCard extends StatelessWidget {
                       const SizedBox(width: 1),
                       Expanded(
                         child: Text(
-                          product['loc']!,
+                          product.location,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 8,

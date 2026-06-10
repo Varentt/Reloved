@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/screens/forgot_password_screen.dart';
 import 'package:reloved/screens/main_navigation_screen.dart';
 import 'package:reloved/screens/admin_dashboard_screen.dart';
-
-// ── Mock user database (ganti dengan API call nanti) ──
-const _mockUsers = [
-  {'email': 'admin@reloved.com', 'password': 'admin123', 'role': 'admin',  'nama': 'Admin Reloved'},
-  {'email': 'user@reloved.com',  'password': 'user123',  'role': 'user',   'nama': 'Pengguna'},
-];
 
 enum _AuthMode { login, register }
 
@@ -44,54 +40,64 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleLogin() async {
     if (!_loginFormKey.currentState!.validate()) return;
 
-    final email    = _emailLoginCtrl.text.trim();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final email = _emailLoginCtrl.text.trim();
     final password = _passLoginCtrl.text;
 
-    // ── Mock login: cari user di _mockUsers ──
-    // TODO: ganti blok ini dengan API call ke backend nanti
-    final matched = _mockUsers.where(
-      (u) => u['email'] == email && u['password'] == password,
-    ).toList();
+    final error = await authProvider.login(email, password);
 
-    if (matched.isEmpty) {
+    if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email atau password salah'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    final role = matched.first['role'];
-    if (role == 'admin') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+        SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-      );
+      // Login Berhasil, AuthProvider akan otomatis update data user.
+      // Kita tunggu sejenak sampai listener di AuthProvider selesai ambil data Firestore.
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (!mounted) return;
+      final user = authProvider.user;
+      
+      if (user != null) {
+        if (user.role == 'admin') {
+          Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+          );
+        }
+      }
     }
   }
 
-  void _handleRegister() {
+  void _handleRegister() async {
     if (!_registerFormKey.currentState!.validate()) return;
 
-    // ── Mock register: langsung masuk sebagai pengguna ──
-    // TODO: ganti dengan API call ke backend nanti
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Registrasi berhasil! Silakan masuk.'),
-        backgroundColor: Color(0xFF3B5B8A),
-      ),
-    );
-    _switchMode(_AuthMode.login);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final name = _nameRegCtrl.text.trim();
+    final email = _emailRegCtrl.text.trim();
+    final password = _passRegCtrl.text;
+
+    final error = await authProvider.register(name, email, password);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registrasi berhasil! Silakan masuk.'),
+          backgroundColor: Color(0xFF3B5B8A),
+        ),
+      );
+      _switchMode(_AuthMode.login);
+    }
   }
 
   void _switchMode(_AuthMode mode) => setState(() => _mode = mode);

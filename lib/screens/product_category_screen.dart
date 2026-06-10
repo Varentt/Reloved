@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/product_detail_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
@@ -24,47 +27,12 @@ class ProductCategoryScreen extends StatefulWidget {
 
 class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   String _sortBy = 'Terbaru';
-  String _expFilter = 'Semua'; // 'Semua' | 'Terdekat' | 'Terjauh'
+  String _expFilter = 'Semua';
+  final _productService = ProductService();
 
-  List<Map<String, String>> get _rawProducts {
-    if (widget.categoryType == 'SECOND') {
-      return [
-        {'name': 'Sepatu Vans Second', 'price': 'Rp150.000', 'normalPrice': 'Rp300.000', 'loc': 'Malang', 'badge': 'SECOND'},
-        {'name': 'Kaos Uniqlo', 'price': 'Rp50.000', 'normalPrice': 'Rp120.000', 'loc': 'Jember', 'badge': 'SECOND'},
-        {'name': 'Tas Ransel Polo', 'price': 'Rp80.000', 'normalPrice': 'Rp200.000', 'loc': 'Surabaya', 'badge': 'SECOND'},
-        {'name': 'Jaket Denim Levis', 'price': 'Rp180.000', 'normalPrice': 'Rp400.000', 'loc': 'Banyuwangi', 'badge': 'SECOND'},
-      ];
-    }
-    if (widget.categoryType == 'REJECT') {
-      return [
-        {'name': 'Mouse Logitech Reject', 'price': 'Rp45.000', 'normalPrice': 'Rp90.000', 'loc': 'Surabaya', 'badge': 'REJECT'},
-        {'name': 'Keyboard Mechanical Reject', 'price': 'Rp120.000', 'normalPrice': 'Rp250.000', 'loc': 'Malang', 'badge': 'REJECT'},
-        {'name': 'Earphone Samsung Reject', 'price': 'Rp25.000', 'normalPrice': 'Rp60.000', 'loc': 'Jember', 'badge': 'REJECT'},
-        {'name': 'Charger Original Reject', 'price': 'Rp35.000', 'normalPrice': 'Rp75.000', 'loc': 'Surabaya', 'badge': 'REJECT'},
-      ];
-    }
-    // EXPIRED — pakai expiryDays untuk sorting
-    return [
-      {'name': 'Roti Sobek', 'price': 'Rp5.000', 'normalPrice': 'Rp12.000', 'loc': 'Jember', 'badge': 'EXPIRED', 'expiry': '3 hari lagi', 'expiryDays': '3'},
-      {'name': 'Susu UHT', 'price': 'Rp3.000', 'normalPrice': 'Rp8.000', 'loc': 'Banyuwangi', 'badge': 'EXPIRED', 'expiry': '1 hari lagi', 'expiryDays': '1'},
-      {'name': 'Yogurt Buah', 'price': 'Rp4.000', 'normalPrice': 'Rp10.000', 'loc': 'Malang', 'badge': 'EXPIRED', 'expiry': '2 hari lagi', 'expiryDays': '2'},
-      {'name': 'Snack Keripik', 'price': 'Rp2.000', 'normalPrice': 'Rp6.000', 'loc': 'Surabaya', 'badge': 'EXPIRED', 'expiry': '5 hari lagi', 'expiryDays': '5'},
-    ];
+  String _formatRupiah(int price) {
+    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(price);
   }
-
-  List<Map<String, String>> get _products {
-    var list = List<Map<String, String>>.from(_rawProducts);
-    if (widget.categoryType == 'EXPIRED') {
-      if (_expFilter == 'Terdekat') {
-        list.sort((a, b) => int.parse(a['expiryDays'] ?? '0').compareTo(int.parse(b['expiryDays'] ?? '0')));
-      } else if (_expFilter == 'Terjauh') {
-        list.sort((a, b) => int.parse(b['expiryDays'] ?? '0').compareTo(int.parse(a['expiryDays'] ?? '0')));
-      }
-    }
-    return list;
-  }
-
-  Color _badgeColor(String badge) => _primary;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +53,6 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
         title: Text(widget.categoryTitle,
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17)),
         iconTheme: const IconThemeData(color: Colors.white),
-        // search icon dihapus
       ),
       body: Column(
         children: [
@@ -95,8 +62,8 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                Text('${_products.length} produk',
-                    style: const TextStyle(color: _textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
+                const Text('Katalog Produk',
+                    style: TextStyle(color: _textSecondary, fontSize: 13, fontWeight: FontWeight.w500)),
                 const Spacer(),
                 GestureDetector(
                   onTap: () => _showSortSheet(context),
@@ -140,132 +107,117 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
             ),
           ),
 
-          // Grid
+          // Grid (Real-time dari Firestore)
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const crossAxisCount = 4;
-                const padding = 10.0;
-                const spacing = 8.0;
-                final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
-                final cardHeight = cardWidth + 82.0;
-                final ratio = cardWidth / cardHeight;
+            child: StreamBuilder<List<ProductModel>>(
+              stream: _productService.activeProductsStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                
+                // Filter berdasarkan kategori
+                var products = snapshot.data?.where((p) => p.category == widget.categoryTitle).toList() ?? [];
 
-                return GridView.builder(
-                  padding: const EdgeInsets.all(padding),
-                  itemCount: _products.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    childAspectRatio: ratio,
-                    crossAxisSpacing: spacing,
-                    mainAxisSpacing: spacing,
-                  ),
-                  itemBuilder: (context, i) {
-                    final p = _products[i];
-                    return GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)),
+                if (products.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inventory_2_outlined, size: 60, color: _accent),
+                        const SizedBox(height: 12),
+                        Text('Tidak ada produk di kategori ini', style: TextStyle(color: _textSecondary)),
+                      ],
+                    ),
+                  );
+                }
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+                    const padding = 10.0;
+                    const spacing = 8.0;
+                    final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
+                    final cardHeight = cardWidth + 82.0;
+                    final ratio = cardWidth / cardHeight;
+
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(padding),
+                      itemCount: products.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: ratio,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2)),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: cardWidth,
-                              height: cardWidth,
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: _accent.withOpacity(0.4),
-                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                                    ),
-                                    child: const Center(
-                                      child: Icon(Icons.image_outlined, size: 22, color: _textSecondary),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 3, left: 3,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: _badgeColor(p['badge']!),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Text(p['badge']!,
-                                          style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w800)),
-                                    ),
-                                  ),
-                                  if (p['expiry'] != null)
-                                    Positioned(
-                                      bottom: 3, left: 3, right: 3,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+                      itemBuilder: (context, i) {
+                        final p = products[i];
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => ProductDetailScreen(product: p)),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 2)),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: cardWidth,
+                                  height: cardWidth,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
                                         decoration: BoxDecoration(
-                                          color: Colors.red.shade600,
-                                          borderRadius: BorderRadius.circular(3),
+                                          color: _accent.withOpacity(0.4),
+                                          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
                                         ),
-                                        child: Text(p['expiry']!, textAlign: TextAlign.center,
-                                            style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w700)),
+                                        child: p.imageUrl.isNotEmpty
+                                            ? Image.network(p.imageUrl, fit: BoxFit.cover)
+                                            : const Center(child: Icon(Icons.image_outlined, size: 22, color: _textSecondary)),
                                       ),
-                                    ),
-                                  Positioned(
-                                    top: 3, right: 3,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), shape: BoxShape.circle),
-                                      child: const Icon(Icons.favorite_border, size: 9, color: Colors.grey),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: 80,
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(6, 5, 6, 5),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(p['name']!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _textPrimary, height: 1.2)),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(p['normalPrice']!,
-                                            style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 9)),
-                                        Text(p['price']!,
-                                            style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 11)),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.location_on_outlined, size: 8, color: _textSecondary),
-                                        const SizedBox(width: 1),
-                                        Expanded(
-                                          child: Text(p['loc']!, overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(fontSize: 9, color: _textSecondary)),
+                                      Positioned(
+                                        top: 3, left: 3,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: _primary,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                          child: Text(p.category.split(' ').last.toUpperCase(),
+                                              style: const TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.w800)),
                                         ),
-                                      ],
-                                    ),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(6, 5, 6, 5),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: _textPrimary, height: 1.2)),
+                                      const SizedBox(height: 2),
+                                      if (p.normalPrice > 0)
+                                        Text(_formatRupiah(p.normalPrice),
+                                            style: const TextStyle(decoration: TextDecoration.lineThrough, color: _textSecondary, fontSize: 9)),
+                                      Text(_formatRupiah(p.price),
+                                          style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 11)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
