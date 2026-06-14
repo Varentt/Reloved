@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:reloved/models/product_model.dart';
+import 'package:reloved/services/product_service.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -8,23 +12,28 @@ const _textPrimary = Color(0xFF1a2535);
 const _textSecondary = Color(0xFF7a8fa6);
 
 class EditProductScreen extends StatefulWidget {
-  const EditProductScreen({super.key});
+  final ProductModel product;
+  const EditProductScreen({super.key, required this.product});
 
   @override
   State<EditProductScreen> createState() => _EditProductScreenState();
 }
 
 class _EditProductScreenState extends State<EditProductScreen> {
-  final _nameController = TextEditingController();
-  final _normalPriceController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _normalPriceController;
+  late final TextEditingController _priceController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _locationController;
 
   String? _selectedCategory;
   String? _selectedCondition;
   DateTime? _expiredDate;
   int _stok = 1;
+  bool _isLoading = false;
+
+  XFile? _imageFile;
+  final ImagePicker _picker = ImagePicker();
 
   final List<String> _categories = [
     'Barang Second',
@@ -39,6 +48,18 @@ class _EditProductScreenState extends State<EditProductScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.product.name);
+    _normalPriceController = TextEditingController(text: widget.product.normalPrice.toString());
+    _priceController = TextEditingController(text: widget.product.price.toString());
+    _descriptionController = TextEditingController(text: widget.product.description);
+    _locationController = TextEditingController(text: widget.product.location);
+    _selectedCategory = widget.product.category;
+    _selectedCondition = widget.product.condition;
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _normalPriceController.dispose();
@@ -48,198 +69,290 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _surface,
-      body: SafeArea(
+  // 📸 FUNGSI PILIH SUMBER FOTO (KAMERA / GALERI)
+  Future<void> _pilihSumberFoto() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── AppBar gradient ──
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryDark, _primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(4, 12, 16, 12),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Text(
-                    'Edit Produk',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
+            const Text(
+              'Ubah Foto Produk',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: _textPrimary,
               ),
             ),
-
-            // ── Body ──
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    // Upload Foto
-                    _buildLabel('Foto Produk'),
-                    GestureDetector(
-                      onTap: () {
-                        // TODO: Implementasi ambil gambar
-                      },
-                      child: Container(
-                        height: 150,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: _accent.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _accent),
-                        ),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_a_photo_outlined, size: 40, color: _primary),
-                            SizedBox(height: 8),
-                            Text('Ganti Foto',
-                                style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Nama Barang
-                    _buildLabel('Nama Barang'),
-                    _buildTextField(_nameController, 'Contoh: Sepatu Sneaker Nike'),
-
-                    const SizedBox(height: 14),
-
-                    // Harga Normal
-                    _buildLabel('Harga Normal (Rp)'),
-                    _buildTextField(_normalPriceController, 'Contoh: 250000', isNumber: true),
-
-                    const SizedBox(height: 14),
-
-                    // Harga Jual
-                    _buildLabel('Harga Jual (Rp)'),
-                    _buildTextField(_priceController, 'Contoh: 150000', isNumber: true),
-
-                    const SizedBox(height: 14),
-
-                    // Jumlah Stok
-                    _buildLabel('Jumlah Stok'),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.camera);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: _accent),
-                        borderRadius: BorderRadius.circular(10),
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          const Icon(Icons.inventory_outlined, size: 18, color: _primary),
-                          const SizedBox(width: 10),
-                          const Text('Stok tersedia',
-                              style: TextStyle(fontSize: 13, color: _textSecondary)),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: _stok > 1 ? () => setState(() => _stok--) : null,
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: _stok > 1 ? _primary : _accent.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(Icons.remove,
-                                  size: 16,
-                                  color: _stok > 1 ? Colors.white : _textSecondary),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              '$_stok',
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: _textPrimary),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => setState(() => _stok++),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: _primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.add, size: 16, color: Colors.white),
+                          const Icon(Icons.camera_alt, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Kamera',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: 14),
-
-                    // Kategori
-                    _buildLabel('Kategori'),
-                    _buildDropdown(
-                      value: _selectedCategory,
-                      hint: 'Pilih Kategori',
-                      items: _categories,
-                      onChanged: (val) => setState(() => _selectedCategory = val),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Kondisi
-                    _buildLabel('Kondisi'),
-                    _buildDropdown(
-                      value: _selectedCondition,
-                      hint: 'Pilih Kondisi',
-                      items: _conditions,
-                      onChanged: (val) => setState(() => _selectedCondition = val),
-                    ),
-
-                    // Tanggal Kedaluwarsa
-                    if (_selectedCategory == 'Makanan Hampir Expired') ...[
-                      const SizedBox(height: 14),
-                      _buildLabel('Tanggal Kedaluwarsa'),
-                      InkWell(
-                        onTap: () async {
-                          final pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: DateTime.now(),
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2035),
-                            builder: (context, child) => Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: const ColorScheme.light(primary: _primary),
-                              ),
-                              child: child!,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.gallery);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.photo_library, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Galeri',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
                             ),
-                          );
-                          if (pickedDate != null) {
-                            setState(() => _expiredDate = pickedDate);
-                          }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ambilFoto(ImageSource source) async {
+    try {
+      final XFile? selected = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+      );
+      if (selected != null) {
+        setState(() => _imageFile = selected);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengambil gambar: $e')),
+      );
+    }
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_nameController.text.isEmpty || _priceController.text.isEmpty || _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Isi data wajib (Nama, Harga, Kategori)')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      String imageUrl = widget.product.imageUrl;
+
+      // Jika user memilih gambar baru, upload ke Storage
+      if (_imageFile != null) {
+        final uploadedUrl = await ProductService().uploadProductImage(
+          ownerId: widget.product.ownerId,
+          filePath: _imageFile!.path,
+        );
+        if (uploadedUrl != null) {
+          imageUrl = uploadedUrl;
+        } else {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal mengunggah foto produk')),
+          );
+          return;
+        }
+      }
+
+      final updatedProduct = ProductModel(
+        id: widget.product.id,
+        ownerId: widget.product.ownerId,
+        name: _nameController.text.trim(),
+        price: int.parse(_priceController.text.replaceAll(RegExp(r'[^0-9]'), '')),
+        normalPrice: int.tryParse(_normalPriceController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        category: _selectedCategory!,
+        condition: _selectedCondition ?? 'Baik',
+        location: _locationController.text.trim(),
+        description: _descriptionController.text.trim(),
+        imageUrl: imageUrl,
+        status: widget.product.status,
+        createdAt: widget.product.createdAt,
+      );
+
+      final error = await ProductService().updateProduct(updatedProduct);
+
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Produk berhasil diperbarui!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _surface,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                // ── AppBar gradient ──
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_primaryDark, _primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(4, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const Text(
+                        'Edit Produk',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Body ──
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Upload Foto
+                        _buildLabel('Foto Produk'),
+                        GestureDetector(
+                          onTap: _pilihSumberFoto,
+                          child: Container(
+                            height: 180,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: _accent.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: _accent),
+                            ),
+                            child: _imageFile != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.file(File(_imageFile!.path), fit: BoxFit.cover),
+                                  )
+                                : (widget.product.imageUrl.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.network(widget.product.imageUrl, fit: BoxFit.cover),
+                                      )
+                                    : const Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.add_a_photo_outlined, size: 40, color: _primary),
+                                          SizedBox(height: 8),
+                                          Text('Ubah Foto Produk (Kamera / Galeri)',
+                                              style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+                                        ],
+                                      )),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Nama Barang
+                        _buildLabel('Nama Barang'),
+                        _buildTextField(_nameController, 'Contoh: Sepatu Sneaker Nike'),
+
+                        const SizedBox(height: 14),
+
+                        // Harga Normal
+                        _buildLabel('Harga Normal (Rp)'),
+                        _buildTextField(_normalPriceController, 'Contoh: 250000', isNumber: true),
+
+                        const SizedBox(height: 14),
+
+                        // Harga Jual
+                        _buildLabel('Harga Jual (Rp)'),
+                        _buildTextField(_priceController, 'Contoh: 150000', isNumber: true),
+
+                        const SizedBox(height: 14),
+
+                        // Jumlah Stok
+                        _buildLabel('Jumlah Stok'),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(color: _accent),
@@ -247,72 +360,172 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
+                              const Icon(Icons.inventory_outlined, size: 18, color: _primary),
                               const SizedBox(width: 10),
-                              Text(
-                                _expiredDate == null
-                                    ? 'Pilih Tanggal Kedaluwarsa'
-                                    : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
-                                style: TextStyle(
-                                    color: _expiredDate == null ? _textSecondary : _textPrimary),
+                              const Text('Stok tersedia',
+                                  style: TextStyle(fontSize: 13, color: _textSecondary)),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _stok > 1 ? () => setState(() => _stok--) : null,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: _stok > 1 ? _primary : _accent.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(Icons.remove,
+                                      size: 16,
+                                      color: _stok > 1 ? Colors.white : _textSecondary),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  '$_stok',
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: _textPrimary),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => setState(() => _stok++),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: _primary,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.add, size: 16, color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
 
-                    const SizedBox(height: 14),
+                        const SizedBox(height: 14),
 
-                    // Lokasi
-                    _buildLabel('Lokasi'),
-                    _buildTextField(_locationController, 'Contoh: Malang, Jawa Timur'),
-
-                    const SizedBox(height: 14),
-
-                    // Deskripsi
-                    _buildLabel('Deskripsi'),
-                    _buildTextField(
-                      _descriptionController,
-                      'Ceritakan detail barang anda...',
-                      maxLines: 4,
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Tombol Simpan
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Produk berhasil diperbarui!'),
-                              backgroundColor: _primary,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 0,
+                        // Kategori
+                        _buildLabel('Kategori'),
+                        _buildDropdown(
+                          value: _selectedCategory,
+                          hint: 'Pilih Kategori',
+                          items: _categories,
+                          onChanged: (val) => setState(() => _selectedCategory = val),
                         ),
-                        child: const Text('Simpan Perubahan',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                      ),
-                    ),
 
-                    const SizedBox(height: 32),
-                  ],
+                        const SizedBox(height: 14),
+
+                        // Kondisi
+                        _buildLabel('Kondisi'),
+                        _buildDropdown(
+                          value: _selectedCondition,
+                          hint: 'Pilih Kondisi',
+                          items: _conditions,
+                          onChanged: (val) => setState(() => _selectedCondition = val),
+                        ),
+
+                        // Tanggal Kedaluwarsa
+                        if (_selectedCategory == 'Makanan Hampir Expired') ...[
+                          const SizedBox(height: 14),
+                          _buildLabel('Tanggal Kedaluwarsa'),
+                          InkWell(
+                            onTap: () async {
+                              final pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime(2035),
+                                builder: (context, child) => Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(primary: _primary),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (pickedDate != null) {
+                                setState(() => _expiredDate = pickedDate);
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: _accent),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _expiredDate == null
+                                        ? 'Pilih Tanggal Kedaluwarsa'
+                                        : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
+                                    style: TextStyle(
+                                        color: _expiredDate == null ? _textSecondary : _textPrimary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 14),
+
+                        // Lokasi
+                        _buildLabel('Lokasi'),
+                        _buildTextField(_locationController, 'Contoh: Malang, Jawa Timur'),
+
+                        const SizedBox(height: 14),
+
+                        // Deskripsi
+                        _buildLabel('Deskripsi'),
+                        _buildTextField(
+                          _descriptionController,
+                          'Ceritakan detail barang anda...',
+                          maxLines: 4,
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        // Tombol Simpan
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleUpdate,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Text('Simpan Perubahan',
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (_isLoading)
+            Container(color: Colors.black26, child: const Center(child: CircularProgressIndicator(color: _primary))),
+        ],
       ),
     );
   }

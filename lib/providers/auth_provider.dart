@@ -56,4 +56,50 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _authService.logout();
   }
+
+  // Fungsi Update Profile (termasuk upload foto jika ada)
+  Future<String?> updateProfile({
+    required String name,
+    required String email,
+    required String phone,
+    required String bio,
+    String? imagePath,
+  }) async {
+    if (_user == null) return "User tidak terautentikasi";
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      String? photoUrl;
+      if (imagePath != null) {
+        photoUrl = await _authService.uploadProfileImage(
+          uid: _user!.uid,
+          filePath: imagePath,
+        );
+      }
+
+      String? error = await _authService.updateUserData(
+        uid: _user!.uid,
+        name: name,
+        email: email,
+        phone: phone,
+        bio: bio,
+        photoUrl: photoUrl,
+      );
+
+      if (error == null) {
+        // Ambil ulang data user terbaru
+        _user = await _authService.getUserData(_user!.uid);
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return error;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return e.toString();
+    }
+  }
 }

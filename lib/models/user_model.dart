@@ -3,12 +3,18 @@ class UserModel {
   final String email;
   final String name;
   final String role; // 'admin' atau 'user'
+  final String? photoUrl;
+  final String? phone;
+  final String? bio;
 
   UserModel({
     required this.uid,
     required this.email,
     required this.name,
     required this.role,
+    this.photoUrl,
+    this.phone,
+    this.bio,
   });
 
   // Konversi dari Map (Firestore) ke Object
@@ -18,6 +24,9 @@ class UserModel {
       email: data['email'] ?? '',
       name: data['name'] ?? '',
       role: data['role'] ?? 'user',
+      photoUrl: data['photoUrl'],
+      phone: data['phone'],
+      bio: data['bio'],
     );
   }
 
@@ -27,6 +36,9 @@ class UserModel {
       'email': email,
       'name': name,
       'role': role,
+      'photoUrl': photoUrl,
+      'phone': phone,
+      'bio': bio,
     };
   }
 }

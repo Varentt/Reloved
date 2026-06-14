@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:reloved/models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Stream untuk memantau status login (aktif terus)
   Stream<User?> get userStream => _auth.authStateChanges();
@@ -65,6 +68,43 @@ class AuthService {
       print("Error ambil data user: $e");
     }
     return null;
+  }
+
+  // Update data user di Firestore
+  Future<String?> updateUserData({
+    required String uid,
+    required String name,
+    required String email,
+    required String phone,
+    required String bio,
+    String? photoUrl,
+  }) async {
+    try {
+      Map<String, dynamic> updateData = {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'bio': bio,
+      };
+      if (photoUrl != null) {
+        updateData['photoUrl'] = photoUrl;
+      }
+      await _db.collection('users').doc(uid).update(updateData);
+      return null; // Sukses
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  // Upload foto ke Firebase Storage
+  Future<String> uploadProfileImage({
+    required String uid,
+    required String filePath,
+  }) async {
+    final storageRef = _storage.ref().child('profile_images').child('$uid.jpg');
+    final uploadTask = await storageRef.putFile(File(filePath));
+    final downloadUrl = await uploadTask.ref.getDownloadURL();
+    return downloadUrl;
   }
 
   // Logout

@@ -159,7 +159,7 @@ class MyProductsScreen extends StatelessWidget {
                                         icon: Icons.edit_outlined,
                                         label: 'Edit',
                                         onTap: () => Navigator.push(context,
-                                            MaterialPageRoute(builder: (_) => const EditProductScreen())),
+                                            MaterialPageRoute(builder: (_) => EditProductScreen(product: product))),
                                       ),
                                       const SizedBox(width: 8),
                                       _SmallButton(

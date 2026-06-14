@@ -59,11 +59,114 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
-  // 📸 FUNGSI AMBIL FOTO
-  Future<void> _pickImage() async {
-    final XFile? selected = await _picker.pickImage(source: ImageSource.gallery);
-    if (selected != null) {
-      setState(() => _imageFile = selected);
+  // 📸 FUNGSI PILIH SUMBER FOTO (KAMERA / GALERI)
+  Future<void> _pilihSumberFoto() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pilih Foto Produk',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.camera);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.camera_alt, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Kamera',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.gallery);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.photo_library, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Galeri',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _ambilFoto(ImageSource source) async {
+    try {
+      final XFile? selected = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+      );
+      if (selected != null) {
+        setState(() => _imageFile = selected);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengambil gambar: $e')),
+      );
     }
   }
 
@@ -124,9 +227,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
+    if (_imageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Foto produk wajib diisi')));
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    // MOCK: Sementara imageUrl kosong karena perlu Firebase Storage setup
+    String imageUrl = '';
+    try {
+      imageUrl = await ProductService().uploadProductImage(
+        ownerId: user.uid,
+        filePath: _imageFile!.path,
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengunggah foto produk: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final product = ProductModel(
       id: '', 
       ownerId: user.uid,
@@ -137,7 +261,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       condition: _selectedCondition ?? 'Baik',
       location: _locationController.text.trim(),
       description: _descriptionController.text.trim(),
-      imageUrl: '', 
+      imageUrl: imageUrl, 
       status: 'Aktif',
       createdAt: DateTime.now(),
     );
@@ -192,7 +316,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       children: [
                         _buildLabel('Foto Produk'),
                         GestureDetector(
-                          onTap: _pickImage,
+                          onTap: _pilihSumberFoto,
                           child: Container(
                             height: 180,
                             width: double.infinity,
@@ -211,7 +335,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     children: [
                                       Icon(Icons.add_a_photo_outlined, size: 40, color: _primary),
                                       SizedBox(height: 8),
-                                      Text('Tambah Foto dari Galeri', style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
+                                      Text('Tambah Foto Produk (Kamera / Galeri)', style: TextStyle(color: _primary, fontWeight: FontWeight.w600)),
                                     ],
                                   ),
                           ),

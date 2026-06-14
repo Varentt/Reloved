@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:reloved/providers/auth_provider.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -15,10 +19,23 @@ class PengaturanAkunScreen extends StatefulWidget {
 }
 
 class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
-  final _namaCtrl = TextEditingController(text: 'Nama Lengkap');
-  final _emailCtrl = TextEditingController(text: 'user@email.com');
-  final _teleponCtrl = TextEditingController(text: '08123456789');
-  final _bioCtrl = TextEditingController(text: '');
+  late final TextEditingController _namaCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _teleponCtrl;
+  late final TextEditingController _bioCtrl;
+
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Provider.of<AuthProvider>(context, listen: false).user;
+    _namaCtrl = TextEditingController(text: user?.name ?? '');
+    _emailCtrl = TextEditingController(text: user?.email ?? '');
+    _teleponCtrl = TextEditingController(text: user?.phone ?? '');
+    _bioCtrl = TextEditingController(text: user?.bio ?? '');
+  }
 
   @override
   void dispose() {
@@ -29,15 +46,158 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
     super.dispose();
   }
 
-  void _simpanPerubahan() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Perubahan berhasil disimpan'),
-        backgroundColor: _primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+  Future<void> _pilihSumberFoto() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ubah Foto Profil',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: _textPrimary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.camera);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.camera_alt, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Kamera',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _ambilFoto(ImageSource.gallery);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: _surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _accent.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.photo_library, color: _primary, size: 32),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Galeri',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _ambilFoto(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengambil gambar: $e')),
+      );
+    }
+  }
+
+  Future<void> _simpanPerubahan() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    if (_namaCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama lengkap tidak boleh kosong')),
+      );
+      return;
+    }
+
+    String? error = await authProvider.updateProfile(
+      name: _namaCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      phone: _teleponCtrl.text.trim(),
+      bio: _bioCtrl.text.trim(),
+      imagePath: _selectedImage?.path,
+    );
+
+    if (!mounted) return;
+
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Perubahan berhasil disimpan'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyimpan perubahan: $error'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   void _ubahPassword() {
@@ -143,6 +303,9 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
@@ -167,14 +330,28 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
               color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
         ),
         actions: [
-          TextButton(
-            onPressed: _simpanPerubahan,
-            child: const Text('Simpan',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14)),
-          ),
+          authProvider.isLoading
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _simpanPerubahan,
+                  child: const Text('Simpan',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14)),
+                ),
         ],
       ),
       body: SingleChildScrollView(
@@ -186,23 +363,33 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
             Center(
               child: Stack(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _primary, width: 2),
-                    ),
-                    child: const CircleAvatar(
-                      radius: 48,
-                      backgroundColor: _accent,
-                      child:
-                          Icon(Icons.person, size: 56, color: _primary),
+                  GestureDetector(
+                    onTap: _pilihSumberFoto,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _primary, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 48,
+                        backgroundColor: _accent,
+                        backgroundImage: _selectedImage != null
+                            ? FileImage(_selectedImage!)
+                            : (user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                                ? NetworkImage(user.photoUrl!)
+                                : null) as ImageProvider?,
+                        child: _selectedImage == null &&
+                                (user?.photoUrl == null || user!.photoUrl!.isEmpty)
+                            ? const Icon(Icons.person, size: 56, color: _primary)
+                            : null,
+                      ),
                     ),
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: () {},
+                      onTap: _pilihSumberFoto,
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: const BoxDecoration(
@@ -275,18 +462,27 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _simpanPerubahan,
+                onPressed: authProvider.isLoading ? null : _simpanPerubahan,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Simpan Perubahan',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15)),
+                child: authProvider.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text('Simpan Perubahan',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15)),
               ),
             ),
             const SizedBox(height: 24),
