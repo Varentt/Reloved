@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,7 +25,7 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
   late final TextEditingController _teleponCtrl;
   late final TextEditingController _bioCtrl;
 
-  File? _selectedImage;
+  XFile? _selectedImage;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -148,7 +149,7 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
       );
       if (pickedFile != null) {
         setState(() {
-          _selectedImage = File(pickedFile.path);
+          _selectedImage = pickedFile;
         });
       }
     } catch (e) {
@@ -168,12 +169,18 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
       return;
     }
 
+    Uint8List? webBytes;
+    if (kIsWeb && _selectedImage != null) {
+      webBytes = await _selectedImage!.readAsBytes();
+    }
+
     String? error = await authProvider.updateProfile(
       name: _namaCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       phone: _teleponCtrl.text.trim(),
       bio: _bioCtrl.text.trim(),
       imagePath: _selectedImage?.path,
+      webBytes: webBytes,
     );
 
     if (!mounted) return;
@@ -374,7 +381,9 @@ class _PengaturanAkunScreenState extends State<PengaturanAkunScreen> {
                         radius: 48,
                         backgroundColor: _accent,
                         backgroundImage: _selectedImage != null
-                            ? FileImage(_selectedImage!)
+                            ? (kIsWeb
+                                ? NetworkImage(_selectedImage!.path)
+                                : FileImage(File(_selectedImage!.path))) as ImageProvider?
                             : (user?.photoUrl != null && user!.photoUrl!.isNotEmpty
                                 ? NetworkImage(user.photoUrl!)
                                 : null) as ImageProvider?,

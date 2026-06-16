@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reloved/models/user_model.dart';
@@ -64,6 +65,7 @@ class AuthProvider with ChangeNotifier {
     required String phone,
     required String bio,
     String? imagePath,
+    Uint8List? webBytes,
   }) async {
     if (_user == null) return "User tidak terautentikasi";
     
@@ -72,10 +74,11 @@ class AuthProvider with ChangeNotifier {
 
     try {
       String? photoUrl;
-      if (imagePath != null) {
+      if (imagePath != null || webBytes != null) {
         photoUrl = await _authService.uploadProfileImage(
           uid: _user!.uid,
-          filePath: imagePath,
+          filePath: imagePath ?? '',
+          webBytes: webBytes,
         );
       }
 

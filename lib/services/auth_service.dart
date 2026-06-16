@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -100,10 +101,19 @@ class AuthService {
   Future<String> uploadProfileImage({
     required String uid,
     required String filePath,
+    Uint8List? webBytes,
   }) async {
     final storageRef = _storage.ref().child('profile_images').child('$uid.jpg');
-    final uploadTask = await storageRef.putFile(File(filePath));
-    final downloadUrl = await uploadTask.ref.getDownloadURL();
+    
+    UploadTask uploadTask;
+    if (kIsWeb && webBytes != null) {
+      uploadTask = storageRef.putData(webBytes);
+    } else {
+      uploadTask = storageRef.putFile(File(filePath));
+    }
+
+    final snapshot = await uploadTask;
+    final downloadUrl = await snapshot.ref.getDownloadURL();
     return downloadUrl;
   }
 

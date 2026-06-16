@@ -46,7 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '475680856811',
     projectId: 'reloved-4cdc6',
     authDomain: 'reloved-4cdc6.firebaseapp.com',
-    storageBucket: 'reloved-4cdc6.appspot.com',
+    storageBucket: 'reloved-4cdc6.firebasestorage.app',
     measurementId: 'G-DSNLLZ6NYG',
   );
 
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:475680856811:android:5d29eccd9662d838b0bcae',
     messagingSenderId: '475680856811',
     projectId: 'reloved-4cdc6',
-    storageBucket: 'reloved-4cdc6.appspot.com',
+    storageBucket: 'reloved-4cdc6.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     appId: '1:475680856811:ios:7a20286c3061fa9ab0bcae',
     messagingSenderId: '475680856811',
     projectId: 'reloved-4cdc6',
-    storageBucket: 'reloved-4cdc6.appspot.com',
+    storageBucket: 'reloved-4cdc6.firebasestorage.app',
     iosBundleId: 'com.example.reloved',
   );
 
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     appId: '1:475680856811:ios:7a20286c3061fa9ab0bcae',
     messagingSenderId: '475680856811',
     projectId: 'reloved-4cdc6',
-    storageBucket: 'reloved-4cdc6.appspot.com',
+    storageBucket: 'reloved-4cdc6.firebasestorage.app',
     iosBundleId: 'com.example.reloved',
   );
 
@@ -82,7 +82,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '475680856811',
     projectId: 'reloved-4cdc6',
     authDomain: 'reloved-4cdc6.firebaseapp.com',
-    storageBucket: 'reloved-4cdc6.appspot.com',
+    storageBucket: 'reloved-4cdc6.firebasestorage.app',
     measurementId: 'G-S570E8PCR5',
   );
 }

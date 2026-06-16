@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -236,9 +237,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     String imageUrl = '';
     try {
+      Uint8List? webBytes;
+      if (kIsWeb) {
+        webBytes = await _imageFile!.readAsBytes();
+      }
       imageUrl = await ProductService().uploadProductImage(
         ownerId: user.uid,
         filePath: _imageFile!.path,
+        webBytes: webBytes,
       );
     } catch (e) {
       setState(() => _isLoading = false);
@@ -328,7 +334,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             child: _imageFile != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(File(_imageFile!.path), fit: BoxFit.cover),
+                                    child: kIsWeb
+                                        ? Image.network(_imageFile!.path, fit: BoxFit.cover)
+                                        : Image.file(File(_imageFile!.path), fit: BoxFit.cover),
                                   )
                                 : const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,

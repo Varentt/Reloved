@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:reloved/models/product_model.dart';
@@ -195,9 +196,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
       // Jika user memilih gambar baru, upload ke Storage
       if (_imageFile != null) {
+        Uint8List? webBytes;
+        if (kIsWeb) {
+          webBytes = await _imageFile!.readAsBytes();
+        }
         final uploadedUrl = await ProductService().uploadProductImage(
           ownerId: widget.product.ownerId,
           filePath: _imageFile!.path,
+          webBytes: webBytes,
         );
         if (uploadedUrl != null) {
           imageUrl = uploadedUrl;
@@ -310,7 +316,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
                             child: _imageFile != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
-                                    child: Image.file(File(_imageFile!.path), fit: BoxFit.cover),
+                                    child: kIsWeb
+                                        ? Image.network(_imageFile!.path, fit: BoxFit.cover)
+                                        : Image.file(File(_imageFile!.path), fit: BoxFit.cover),
                                   )
                                 : (widget.product.imageUrl.isNotEmpty
                                     ? ClipRRect(

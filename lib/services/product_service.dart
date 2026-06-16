@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:reloved/models/product_model.dart';
@@ -11,6 +12,7 @@ class ProductService {
   Future<String> uploadProductImage({
     required String ownerId,
     required String filePath,
+    Uint8List? webBytes,
   }) async {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final storageRef = _storage
@@ -18,8 +20,16 @@ class ProductService {
         .child('product_images')
         .child(ownerId)
         .child(fileName);
-    final uploadTask = await storageRef.putFile(File(filePath));
-    final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+    UploadTask uploadTask;
+    if (kIsWeb && webBytes != null) {
+      uploadTask = storageRef.putData(webBytes);
+    } else {
+      uploadTask = storageRef.putFile(File(filePath));
+    }
+
+    final snapshot = await uploadTask;
+    final downloadUrl = await snapshot.ref.getDownloadURL();
     return downloadUrl;
   }
 
