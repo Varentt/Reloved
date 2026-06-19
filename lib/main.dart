@@ -6,12 +6,14 @@ import 'package:reloved/firebase_options.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/screens/splash_screen.dart';
 import 'package:reloved/utils/color_resources.dart';
+import 'package:reloved/services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await SupabaseService.initialize();
   runApp(
     MultiProvider(
       providers: [

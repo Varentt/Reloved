@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:reloved/screens/map_picker_screen.dart';
+
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -92,6 +94,43 @@ class _DaftarAlamatScreenState extends State<DaftarAlamatScreen> {
                 _buildField('Alamat Lengkap', alamatCtrl, maxLines: 2),
                 const SizedBox(height: 12),
                 _buildField('Kota & Kode Pos', kotaCtrl),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MapPickerScreen(),
+                      ),
+                    );
+                    if (result != null && result is Map<String, dynamic>) {
+                      alamatCtrl.text = result['address'] ?? '';
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: _accent.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _primary.withOpacity(0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.map_outlined, color: _primary, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Pilih Lokasi dari Peta',
+                          style: TextStyle(
+                            color: _primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,

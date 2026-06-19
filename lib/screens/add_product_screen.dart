@@ -8,6 +8,8 @@ import 'package:provider/provider.dart';
 import 'package:reloved/models/product_model.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/product_service.dart';
+import 'package:reloved/screens/map_picker_screen.dart';
+
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -214,6 +216,66 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  void _selectLocationOption() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pilih Metode Lokasi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.my_location, color: _primary),
+                title: const Text('Gunakan Lokasi GPS Saat Ini'),
+                subtitle: const Text('Mengambil lokasi perangkat secara otomatis'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getCurrentLocation();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.map_outlined, color: _primary),
+                title: const Text('Pilih dari Peta'),
+                subtitle: const Text('Tentukan lokasi pengambilan lewat Google Maps'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MapPickerScreen(),
+                    ),
+                  );
+                  if (result != null && result is Map<String, dynamic>) {
+                    setState(() {
+                      _locationController.text = result['address'] ?? '';
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _handleSubmit() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.user;
@@ -384,8 +446,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             Expanded(child: _buildTextField(_locationController, 'Klik tombol di samping ->')),
                             const SizedBox(width: 10),
                             IconButton(
-                              onPressed: _getCurrentLocation,
-                              icon: const Icon(Icons.my_location, color: _primary),
+                              onPressed: _selectLocationOption,
+                              icon: const Icon(Icons.pin_drop, color: _primary),
                               style: IconButton.styleFrom(backgroundColor: _accent.withOpacity(0.5)),
                             ),
                           ],

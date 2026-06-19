@@ -16,17 +16,16 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-subprojects {
     afterEvaluate {
         val android = extensions.findByName("android") as? com.android.build.gradle.BaseExtension
         android?.apply {
-            compileSdkVersion(34)
-            buildToolsVersion = "34.0.0"
+            compileSdkVersion(36)
         }
     }
+}
+
+subprojects {
+    project.evaluationDependsOn(":app")
 }
 
 tasks.register<Delete>("clean") {
