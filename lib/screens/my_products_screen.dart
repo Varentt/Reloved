@@ -122,20 +122,44 @@ class MyProductsScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: isSold ? _surface : _accent.withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: Text(
-                                        product.status,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: isSold ? _textSecondary : _primary,
-                                        ),
-                                      ),
+                                    Builder(
+                                      builder: (context) {
+                                        Color badgeBgColor;
+                                        Color badgeTextColor;
+                                        switch (product.status) {
+                                          case 'Aktif':
+                                            badgeBgColor = Colors.green.withOpacity(0.15);
+                                            badgeTextColor = const Color(0xFF2E7D32);
+                                            break;
+                                          case 'Pending':
+                                            badgeBgColor = Colors.orange.withOpacity(0.15);
+                                            badgeTextColor = const Color(0xFFEF6C00);
+                                            break;
+                                          case 'Reject':
+                                            badgeBgColor = Colors.red.withOpacity(0.15);
+                                            badgeTextColor = const Color(0xFFC62828);
+                                            break;
+                                          case 'Terjual':
+                                          default:
+                                            badgeBgColor = _surface;
+                                            badgeTextColor = _textSecondary;
+                                        }
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: badgeBgColor,
+                                            borderRadius: BorderRadius.circular(5),
+                                          ),
+                                          child: Text(
+                                            product.status,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: badgeTextColor,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     ),
                                     const Text('Dilihat', // Placeholder views
                                         style: TextStyle(fontSize: 10, color: _textSecondary)),

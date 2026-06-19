@@ -347,9 +347,26 @@ class _VerifikasiProdukPage extends StatelessWidget {
                   child: Column(
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.image_outlined, size: 40),
-                        title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('Kategori: ${p.category}'),
+                        leading: p.imageUrl.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  p.imageUrl,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_outlined, size: 40, color: Colors.grey),
+                                ),
+                              )
+                            : const Icon(Icons.image_outlined, size: 40, color: Colors.grey),
+                        title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            'Kategori: ${p.category}\nHarga: ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(p.price)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,

@@ -4,6 +4,8 @@ import 'package:reloved/models/order_model.dart';
 import 'package:reloved/models/product_model.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/order_service.dart';
+import 'package:reloved/services/product_service.dart';
+import 'package:reloved/utils/cart_manager.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -17,7 +19,7 @@ class CheckoutScreen extends StatefulWidget {
 
   const CheckoutScreen({super.key, required this.products});
 
-  factory CheckoutScreen.fromProductModel(ProductModel product, {int qty = 1}) {
+  factory CheckoutScreen.fromProductModel(ProductModel product, {int qty = 1, String? sellerName}) {
     return CheckoutScreen(
       products: [
         {
@@ -27,7 +29,8 @@ class CheckoutScreen extends StatefulWidget {
           'price': product.price,
           'badge': product.category,
           'qty': qty,
-          'seller': 'Reloved Seller',
+          'seller': sellerName ?? 'Reloved Seller',
+          'imageUrl': product.imageUrl,
         }
       ],
     );
@@ -83,6 +86,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (user == null) return;
 
+    // Cek apakah user mencoba membeli produk milik sendiri
+    for (var p in widget.products) {
+      if (p['ownerId'] == user.uid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Anda tidak dapat membeli produk Anda sendiri!'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+    }
+
     setState(() => _isProcessing = true);
 
     final orderService = OrderService();
@@ -96,6 +112,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         productId: p['id'],
         productName: p['name'],
         price: p['price'],
+        qty: p['qty'] as int,
         status: 'Pending',
         createdAt: DateTime.now(),
       );
@@ -109,12 +126,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         }
         break;
+      } else {
+        // Decrement stock in Supabase
+        try {
+          final pService = ProductService();
+          final prod = await pService.getProductById(p['id']);
+          if (prod != null) {
+            final newStock = (prod.stock - (p['qty'] as int)).clamp(0, 999999);
+            final updatedProd = ProductModel(
+              id: prod.id,
+              ownerId: prod.ownerId,
+              name: prod.name,
+              price: prod.price,
+              normalPrice: prod.normalPrice,
+              category: prod.category,
+              condition: prod.condition,
+              location: prod.location,
+              description: prod.description,
+              imageUrl: prod.imageUrl,
+              status: newStock == 0 ? 'Terjual' : prod.status, // mark sold out if stock is 0
+              stock: newStock,
+              createdAt: prod.createdAt,
+            );
+            await pService.updateProduct(updatedProd);
+          }
+        } catch (e) {
+          debugPrint("Gagal update stok produk: $e");
+        }
       }
     }
 
     setState(() => _isProcessing = false);
 
     if (success && mounted) {
+      final purchasedIds = widget.products.map((p) => p['id'] as String).toList();
+      CartManager().removeItemsByIds(purchasedIds);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Pesanan berhasil dibuat!'),
@@ -206,7 +253,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     ),
                                     child: Stack(
                                       children: [
-                                        const Center(child: Icon(Icons.image_outlined, color: _textSecondary, size: 24)),
+                                        Positioned.fill(
+                                          child: p['imageUrl'] != null && (p['imageUrl'] as String).isNotEmpty
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  child: Image.network(
+                                                    p['imageUrl'] as String,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : const Center(
+                                                  child: Icon(Icons.image_outlined,
+                                                      color: _textSecondary, size: 24),
+                                                ),
+                                        ),
                                         Positioned(
                                           top: 4, left: 4,
                                           child: Container(

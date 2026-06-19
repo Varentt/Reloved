@@ -19,10 +19,12 @@ class OrderService {
     return _db
         .collection('orders')
         .where('buyerId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snap) {
+          final list = snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   // 3. Ambil Riwayat Penjualan (User sebagai penjual)
@@ -30,10 +32,12 @@ class OrderService {
     return _db
         .collection('orders')
         .where('sellerId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList());
+        .map((snap) {
+          final list = snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   // 4. Update Status Pesanan

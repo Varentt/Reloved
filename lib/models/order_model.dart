@@ -7,6 +7,7 @@ class OrderModel {
   final String productId;
   final String productName;
   final int price;
+  final int qty;
   final String status; // 'Pending', 'Diproses', 'Dikirim', 'Selesai'
   final DateTime createdAt;
 
@@ -17,6 +18,7 @@ class OrderModel {
     required this.productId,
     required this.productName,
     required this.price,
+    this.qty = 1,
     required this.status,
     required this.createdAt,
   });
@@ -29,6 +31,7 @@ class OrderModel {
       productId: data['productId'] ?? '',
       productName: data['productName'] ?? '',
       price: data['price'] ?? 0,
+      qty: data['qty'] ?? 1,
       status: data['status'] ?? 'Pending',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
@@ -41,6 +44,7 @@ class OrderModel {
       'productId': productId,
       'productName': productName,
       'price': price,
+      'qty': qty,
       'status': status,
       'createdAt': FieldValue.serverTimestamp(),
     };

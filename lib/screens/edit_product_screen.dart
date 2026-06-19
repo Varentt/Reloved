@@ -58,6 +58,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     _locationController = TextEditingController(text: widget.product.location);
     _selectedCategory = widget.product.category;
     _selectedCondition = widget.product.condition;
+    _stok = widget.product.stock;
   }
 
   @override
@@ -227,8 +228,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
         location: _locationController.text.trim(),
         description: _descriptionController.text.trim(),
         imageUrl: imageUrl,
-        status: widget.product.status,
+        status: 'Pending', // Mengirim kembali untuk verifikasi admin setelah di-edit
         createdAt: widget.product.createdAt,
+        stock: _stok,
       );
 
       final error = await ProductService().updateProduct(updatedProduct);
@@ -242,7 +244,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Produk berhasil diperbarui!'),
+            content: Text('Produk berhasil diperbarui! Menunggu konfirmasi admin.'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),

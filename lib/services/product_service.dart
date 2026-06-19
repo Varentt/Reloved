@@ -18,6 +18,7 @@ class ProductService {
       'description': product.description,
       'image_url': product.imageUrl,
       'status': product.status,
+      'stock': product.stock,
     };
   }
 
@@ -38,6 +39,7 @@ class ProductService {
       createdAt: data['created_at'] != null 
           ? DateTime.parse(data['created_at']).toLocal() 
           : DateTime.now(),
+      stock: data['stock'] ?? 1,
     );
   }
 
@@ -82,14 +84,17 @@ class ProductService {
   }
 
   // 2. Ambil Daftar Produk (Real-time Stream)
-  // Hanya ambil produk yang statusnya 'Aktif'
+  // Hanya ambil produk yang statusnya 'Aktif' dan stok > 0
   Stream<List<ProductModel>> get activeProductsStream {
     return SupabaseService.client
         .from('products')
         .stream(primaryKey: ['id'])
         .eq('status', 'Aktif')
         .order('created_at', ascending: false)
-        .map((maps) => maps.map((map) => _fromSupabaseMap(map)).toList());
+        .map((maps) => maps
+            .map((map) => _fromSupabaseMap(map))
+            .where((product) => product.stock > 0)
+            .toList());
   }
 
   // 3. Ambil Produk Milik User Tertentu (Toko Saya)
@@ -124,6 +129,22 @@ class ProductService {
     }
   }
 
+  // 5.5. Ambil Detail Produk berdasarkan ID
+  Future<ProductModel?> getProductById(String productId) async {
+    try {
+      final res = await SupabaseService.client
+          .from('products')
+          .select()
+          .eq('id', productId)
+          .maybeSingle();
+      if (res == null) return null;
+      return _fromSupabaseMap(res);
+    } catch (e) {
+      print("Error get product by id: $e");
+      return null;
+    }
+  }
+
   // 6. Hapus Produk
   Future<void> deleteProduct(String productId) async {
     await SupabaseService.client
@@ -147,6 +168,7 @@ class ProductService {
             'description': product.description,
             'image_url': product.imageUrl,
             'status': product.status,
+            'stock': product.stock,
           })
           .eq('id', product.id);
       return null; // Sukses

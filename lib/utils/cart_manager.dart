@@ -12,21 +12,34 @@ class CartManager extends ChangeNotifier {
 
   int get totalItems => _items.length;
 
-  void addProduct(Map<String, String> product, {int qty = 1}) {
+  void addProduct({
+    required String id,
+    required String ownerId,
+    required String name,
+    required int price,
+    required String badge,
+    required String imageUrl,
+    required String seller,
+    required int stock,
+    int qty = 1,
+  }) {
     // Cek apakah produk sudah ada di keranjang
-    final index = _items.indexWhere((i) => i['name'] == product['name']);
+    final index = _items.indexWhere((i) => i['id'] == id);
     if (index != -1) {
-      _items[index]['qty'] = (_items[index]['qty'] as int) + qty;
+      final newQty = (_items[index]['qty'] as int) + qty;
+      _items[index]['qty'] = newQty.clamp(1, stock);
+      _items[index]['stock'] = stock;
     } else {
       _items.add({
-        'name': product['name'] ?? '',
-        'price': int.tryParse(
-                product['price']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ??
-            0,
-        'badge': product['badge'] ?? 'SECOND',
-        'loc': product['loc'] ?? '-',
-        'seller': 'Nama Penjual',
-        'qty': qty,
+        'id': id,
+        'ownerId': ownerId,
+        'name': name,
+        'price': price,
+        'badge': badge,
+        'imageUrl': imageUrl,
+        'seller': seller,
+        'qty': qty.clamp(1, stock),
+        'stock': stock,
         'selected': true,
       });
     }
@@ -38,11 +51,17 @@ class CartManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeItemsByIds(List<String> ids) {
+    _items.removeWhere((item) => ids.contains(item['id']));
+    notifyListeners();
+  }
+
   void updateQty(int index, int qty) {
     if (qty <= 0) {
       removeItem(index);
     } else {
-      _items[index]['qty'] = qty;
+      final maxStock = _items[index]['stock'] as int? ?? 999999;
+      _items[index]['qty'] = qty.clamp(1, maxStock);
       notifyListeners();
     }
   }

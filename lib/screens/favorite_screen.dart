@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:reloved/models/product_model.dart';
+import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/product_service.dart';
+import 'package:reloved/services/favorite_service.dart';
 import 'package:reloved/screens/product_detail_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
@@ -20,6 +23,7 @@ class FavoriteScreen extends StatefulWidget {
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
   final _productService = ProductService();
+  final _favoriteService = FavoriteService();
 
   String _formatRupiah(int price) {
     return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(price);
@@ -27,6 +31,9 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       backgroundColor: _surface,
       appBar: AppBar(
@@ -45,19 +52,26 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           ),
         ),
       ),
-      body: StreamBuilder<List<ProductModel>>(
-        stream: _productService.activeProductsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          
-          // MOCK: Sementara nampilin semua produk aktif sebagai simulasi favorit
-          final favorites = snapshot.data ?? [];
+      body: user == null
+          ? const Center(child: Text('Silakan login terlebih dahulu'))
+          : StreamBuilder<List<String>>(
+              stream: _favoriteService.getUserFavoriteProductIds(user.uid),
+              builder: (context, favSnap) {
+                if (favSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: _primary));
+                final favIds = favSnap.data ?? [];
 
-          if (favorites.isEmpty) {
-            return _EmptyState();
-          }
+                return StreamBuilder<List<ProductModel>>(
+                  stream: _productService.activeProductsStream,
+                  builder: (context, prodSnap) {
+                    if (prodSnap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: _primary));
+                    final allProducts = prodSnap.data ?? [];
+                    final favorites = allProducts.where((p) => favIds.contains(p.id)).toList();
 
-          return Column(
+                    if (favorites.isEmpty) {
+                      return _EmptyState();
+                    }
+
+                    return Column(
             children: [
               Container(
                 width: double.infinity,
@@ -153,9 +167,11 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               ),
             ],
           );
-        }
-      ),
-    );
+        },
+      );
+    },
+  ),
+);
   }
 }
 

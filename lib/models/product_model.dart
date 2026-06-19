@@ -13,6 +13,7 @@ class ProductModel {
   final String imageUrl;
   final String status; // 'Pending', 'Aktif', 'Terjual', 'Reject'
   final DateTime createdAt;
+  final int stock;
 
   ProductModel({
     required this.id,
@@ -27,6 +28,7 @@ class ProductModel {
     required this.imageUrl,
     this.status = 'Pending', // Default menunggu verifikasi admin
     required this.createdAt,
+    this.stock = 1,
   });
 
   // Konversi dari Firestore Map ke Object
@@ -44,6 +46,7 @@ class ProductModel {
       imageUrl: data['imageUrl'] ?? '',
       status: data['status'] ?? 'Pending',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      stock: data['stock'] ?? 1,
     );
   }
 
@@ -61,6 +64,7 @@ class ProductModel {
       'imageUrl': imageUrl,
       'status': status,
       'createdAt': FieldValue.serverTimestamp(),
+      'stock': stock,
     };
   }
 }

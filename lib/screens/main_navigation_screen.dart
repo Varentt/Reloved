@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/chat_service.dart';
 import 'package:reloved/screens/home_screen.dart';
 import 'package:reloved/screens/order_screen.dart';
 import 'package:reloved/screens/profile_screen.dart';
 import 'package:reloved/screens/add_product_screen.dart';
+import 'package:reloved/screens/chat_list_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
-const _primaryDark = Color(0xFF2e4a73);
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -17,26 +20,24 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  // hanya 3 screen karena index 1 (tombol +) tidak punya screen sendiri
   final List<Widget> _screens = [
     const HomeScreen(),
     const OrderScreen(),
+    const ChatListScreen(),
     const ProfileScreen(),
   ];
 
   // mapping index navbar ke index _screens
-  // 0=Beranda, 1=Pesanan, 2=(tombol +, skip), 3=Profil
+  // 0=Beranda, 1=Pesanan, 2=Chat, 3=Jual Produk (skip/push), 4=Profil
   void _onItemTapped(int index) {
-    if (index == 2) {
-      // tombol + → buka halaman jual sebagai bottom sheet atau push
+    if (index == 3) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const AddProductScreen()),
       );
       return;
     }
-    // mapping: 0→0, 1→1, 3→2
-    final screenIndex = index < 2 ? index : index - 1;
+    final screenIndex = index < 3 ? index : index - 1;
     setState(() {
       _selectedIndex = screenIndex;
     });
@@ -44,12 +45,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   // mapping balik dari _selectedIndex ke navbar index untuk currentIndex
   int get _navIndex {
-    if (_selectedIndex < 2) return _selectedIndex;
-    return _selectedIndex + 1; // skip index 2 (tombol +)
+    if (_selectedIndex < 3) return _selectedIndex;
+    return _selectedIndex + 1; // skip index 3 (Jual Produk)
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final myUser = authProvider.user;
+
     return Scaffold(
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomAppBar(
@@ -75,10 +79,38 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 isActive: _navIndex == 1,
                 onTap: () => _onItemTapped(1),
               ),
-              // Tombol Jual Produk (tengah, menonjol)
+              // Chat
+              myUser == null
+                  ? _NavItem(
+                      icon: Icons.chat_bubble_outline,
+                      activeIcon: Icons.chat_bubble,
+                      label: 'Chat',
+                      isActive: _navIndex == 2,
+                      onTap: () => _onItemTapped(2),
+                    )
+                  : StreamBuilder<List<ChatRoomModel>>(
+                      stream: ChatService().getUserChatRooms(myUser.uid),
+                      builder: (context, snapshot) {
+                        final rooms = snapshot.data ?? [];
+                        final unreadRoomsCount = rooms.where((room) {
+                          final count = room.unreadCount[myUser.uid] ?? 0;
+                          return count > 0;
+                        }).length;
+
+                        return _NavItem(
+                          icon: Icons.chat_bubble_outline,
+                          activeIcon: Icons.chat_bubble,
+                          label: 'Chat',
+                          isActive: _navIndex == 2,
+                          onTap: () => _onItemTapped(2),
+                          badgeCount: unreadRoomsCount,
+                        );
+                      },
+                    ),
+              // Tombol Jual Produk (menonjol)
               Expanded(
                 child: GestureDetector(
-                  onTap: () => _onItemTapped(2),
+                  onTap: () => _onItemTapped(3),
                   behavior: HitTestBehavior.opaque,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -102,8 +134,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
                 label: 'Profil',
-                isActive: _navIndex == 3,
-                onTap: () => _onItemTapped(3),
+                isActive: _navIndex == 4,
+                onTap: () => _onItemTapped(4),
               ),
             ],
           ),
@@ -120,6 +152,7 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
@@ -127,6 +160,7 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -137,10 +171,40 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: isActive ? _primary : Colors.grey,
-              size: 24,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: isActive ? _primary : Colors.grey,
+                  size: 24,
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 2),
             Text(

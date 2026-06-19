@@ -330,8 +330,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       location: _locationController.text.trim(),
       description: _descriptionController.text.trim(),
       imageUrl: imageUrl, 
-      status: 'Aktif',
+      status: 'Pending',
       createdAt: DateTime.now(),
+      stock: _stok,
     );
 
     final error = await ProductService().addProduct(product);
@@ -341,7 +342,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produk berhasil diiklankan!'), backgroundColor: Colors.green));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produk berhasil diunggah! Menunggu konfirmasi admin.'), backgroundColor: Colors.green));
       Navigator.pop(context);
     }
   }
@@ -437,6 +438,62 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           hint: 'Pilih Kategori',
                           items: _categories,
                           onChanged: (val) => setState(() => _selectedCategory = val),
+                        ),
+
+                        const SizedBox(height: 14),
+                        _buildLabel('Jumlah Stok'),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: _accent),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.inventory_outlined, size: 18, color: _primary),
+                              const SizedBox(width: 10),
+                              const Text('Stok tersedia',
+                                  style: TextStyle(fontSize: 13, color: _textSecondary)),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _stok > 1 ? () => setState(() => _stok--) : null,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: _stok > 1 ? _primary : _accent.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(Icons.remove,
+                                      size: 16,
+                                      color: _stok > 1 ? Colors.white : _textSecondary),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  '$_stok',
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: _textPrimary),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => setState(() => _stok++),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: _primary,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.add, size: 16, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
 
                         const SizedBox(height: 14),

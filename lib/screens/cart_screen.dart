@@ -202,9 +202,20 @@ class _CartScreenState extends State<CartScreen> {
                               ),
                               child: Stack(
                                 children: [
-                                  const Center(
-                                      child: Icon(Icons.image_outlined,
-                                          color: _textSecondary, size: 28)),
+                                  Positioned.fill(
+                                    child: item['imageUrl'] != null && (item['imageUrl'] as String).isNotEmpty
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: Image.network(
+                                              item['imageUrl'] as String,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          )
+                                        : const Center(
+                                            child: Icon(Icons.image_outlined,
+                                                color: _textSecondary, size: 28),
+                                          ),
+                                  ),
                                   Positioned(
                                     top: 4,
                                     left: 4,
@@ -276,9 +287,28 @@ class _CartScreenState extends State<CartScreen> {
                                         ),
                                         _QtyButton(
                                           icon: Icons.add,
-                                          onTap: () => _cart.updateQty(
-                                              i,
-                                              (item['qty'] as int) + 1),
+                                          onTap: () {
+                                            final currentQty = item['qty'] as int;
+                                            final stock = item['stock'] as int? ?? 1;
+                                            if (currentQty < stock) {
+                                              _cart.updateQty(i, currentQty + 1);
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Stok terbatas! Pembelian maksimal $stock item.'),
+                                                  behavior: SnackBarBehavior.floating,
+                                                  duration: const Duration(seconds: 1),
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                          onPressed: () => _removeItem(i),
+                                          constraints: const BoxConstraints(),
+                                          padding: EdgeInsets.zero,
                                         ),
                                         const SizedBox(width: 8),
                                       ],
