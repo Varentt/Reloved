@@ -1,17 +1,13 @@
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:reloved/models/user_model.dart';
+import 'package:reloved/services/supabase_service.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
-
-  // Stream untuk memantau status login (aktif terus)
-  Stream<User?> get userStream => _auth.authStateChanges();
+  // Stream untuk memantau status login
+  Stream<User?> get userStream => SupabaseService.client.auth.onAuthStateChange
+      .map((data) => data.session?.user);
 
   // Fungsi Registrasi
   Future<String?> register({
@@ -20,26 +16,25 @@ class AuthService {
     required String name,
   }) async {
     try {
-      // 1. Buat Akun di Firebase Auth
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
+      // 1. Buat Akun di Supabase Auth
+      final AuthResponse response = await SupabaseService.client.auth.signUp(
         email: email,
         password: password,
+        data: {'name': name},
       );
       
-      User? user = result.user;
+      final User? user = response.user;
 
-      // 2. Simpan Data Tambahan (Nama & Role) ke Firestore
+      // 2. Simpan Data Tambahan (Nama & Role) ke tabel users
       if (user != null) {
-        await _db.collection('users').doc(user.uid).set({
+        await SupabaseService.client.from('users').insert({
+          'id': user.id,
           'name': name,
           'email': email,
           'role': 'user', // Default pendaftar baru adalah user biasa
-          'createdAt': FieldValue.serverTimestamp(),
         });
       }
       return null; // Sukses
-    } on FirebaseAuthException catch (e) {
-      return e.message; // Kembalikan pesan error
     } catch (e) {
       return e.toString();
     }
@@ -51,19 +46,35 @@ class AuthService {
     required String password,
   }) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await SupabaseService.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
       return null; // Sukses
-    } on FirebaseAuthException catch (e) {
-      return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
-  // Ambil Data User Lengkap (termasuk Role dari Firestore)
+  // Ambil Data User Lengkap (termasuk Role dari tabel users)
   Future<UserModel?> getUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
-      if (doc.exists) {
-        return UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      final data = await SupabaseService.client
+          .from('users')
+          .select()
+          .eq('id', uid)
+          .maybeSingle();
+      if (data != null) {
+        // Map keys dari kolom database PostgreSQL ke field camelCase UserModel
+        final userMap = {
+          'email': data['email'],
+          'name': data['name'],
+          'role': data['role'],
+          'photoUrl': data['photo_url'],
+          'phone': data['phone'],
+          'bio': data['bio'],
+        };
+        return UserModel.fromMap(userMap, uid);
       }
     } catch (e) {
       print("Error ambil data user: $e");
@@ -71,7 +82,7 @@ class AuthService {
     return null;
   }
 
-  // Update data user di Firestore
+  // Update data user di tabel users
   Future<String?> updateUserData({
     required String uid,
     required String name,
@@ -88,37 +99,48 @@ class AuthService {
         'bio': bio,
       };
       if (photoUrl != null) {
-        updateData['photoUrl'] = photoUrl;
+        updateData['photo_url'] = photoUrl;
       }
-      await _db.collection('users').doc(uid).update(updateData);
+      await SupabaseService.client
+          .from('users')
+          .update(updateData)
+          .eq('id', uid);
       return null; // Sukses
     } catch (e) {
       return e.toString();
     }
   }
 
-  // Upload foto ke Firebase Storage
+  // Upload foto ke Supabase Storage (Bucket 'Reloved')
   Future<String> uploadProfileImage({
     required String uid,
     required String filePath,
     Uint8List? webBytes,
   }) async {
-    final storageRef = _storage.ref().child('profile_images').child('$uid.jpg');
-    
-    UploadTask uploadTask;
-    if (kIsWeb && webBytes != null) {
-      uploadTask = storageRef.putData(webBytes);
-    } else {
-      uploadTask = storageRef.putFile(File(filePath));
-    }
+    final bytes = kIsWeb && webBytes != null
+        ? webBytes
+        : await File(filePath).readAsBytes();
+    final path = 'profile_images/$uid.jpg';
 
-    final snapshot = await uploadTask;
-    final downloadUrl = await snapshot.ref.getDownloadURL();
+    // Upload ke bucket 'Reloved' (dengan upsert: true)
+    await SupabaseService.client.storage
+        .from('Reloved')
+        .uploadBinary(
+          path, 
+          bytes,
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+        );
+
+    // Dapatkan URL publik
+    final downloadUrl = SupabaseService.client.storage
+        .from('Reloved')
+        .getPublicUrl(path);
+
     return downloadUrl;
   }
 
   // Logout
   Future<void> logout() async {
-    await _auth.signOut();
+    await SupabaseService.client.auth.signOut();
   }
 }

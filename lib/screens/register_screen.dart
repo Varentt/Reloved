@@ -153,7 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // Register Button
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Implementasi Register Firebase nanti di Fase 3
+                  // TODO: Implementasi Register Supabase nanti di Fase 3
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

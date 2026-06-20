@@ -99,7 +99,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               // Send Reset Link Button
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Implementasi Kirim Link Reset Password via Firebase di Fase 3
+                  // TODO: Implementasi Kirim Link Reset Password via Supabase di Fase 3
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Instruksi reset password akan dikirim ke email anda')),
                   );

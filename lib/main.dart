@@ -1,8 +1,6 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:reloved/firebase_options.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/screens/splash_screen.dart';
 import 'package:reloved/utils/color_resources.dart';
@@ -10,9 +8,6 @@ import 'package:reloved/services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   await SupabaseService.initialize();
   runApp(
     MultiProvider(

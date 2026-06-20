@@ -43,3 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node dependencies (migration scripts)
+node_modules/
+package-lock.json
+
+# Sensitive files / credentials
+service-account.json
+.env
+.env.*
+
+# Crash dumps
+*.stackdump

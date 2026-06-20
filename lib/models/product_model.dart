@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ProductModel {
   final String id;
   final String ownerId;
@@ -31,39 +29,44 @@ class ProductModel {
     this.stock = 1,
   });
 
-  // Konversi dari Firestore Map ke Object
+  // Konversi dari Supabase / Firestore Map ke Object
   factory ProductModel.fromMap(Map<String, dynamic> data, String documentId) {
+    final rawTime = data['created_at'] ?? data['createdAt'];
+    final parsedTime = rawTime != null
+        ? DateTime.parse(rawTime.toString()).toLocal()
+        : DateTime.now();
+
     return ProductModel(
       id: documentId,
-      ownerId: data['ownerId'] ?? '',
+      ownerId: data['owner_id'] ?? data['ownerId'] ?? '',
       name: data['name'] ?? '',
       price: data['price'] ?? 0,
-      normalPrice: data['normalPrice'] ?? 0,
+      normalPrice: data['normal_price'] ?? data['normalPrice'] ?? 0,
       category: data['category'] ?? 'Lainnya',
       condition: data['condition'] ?? 'Bekas',
       location: data['location'] ?? '',
       description: data['description'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
+      imageUrl: data['image_url'] ?? data['imageUrl'] ?? '',
       status: data['status'] ?? 'Pending',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: parsedTime,
       stock: data['stock'] ?? 1,
     );
   }
 
-  // Konversi dari Object ke Map untuk simpan ke Firestore
-  Map<String, dynamic> toMap() {
+  // Konversi ke Map untuk Supabase
+  Map<String, dynamic> toSupabaseMap() {
     return {
-      'ownerId': ownerId,
+      'owner_id': ownerId,
       'name': name,
       'price': price,
-      'normalPrice': normalPrice,
+      'normal_price': normalPrice,
       'category': category,
       'condition': condition,
       'location': location,
       'description': description,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'status': status,
-      'createdAt': FieldValue.serverTimestamp(),
+      'created_at': createdAt.toUtc().toIso8601String(),
       'stock': stock,
     };
   }

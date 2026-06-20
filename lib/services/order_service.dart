@@ -1,14 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:reloved/models/order_model.dart';
+import 'package:reloved/services/supabase_service.dart';
 
 class OrderService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-
   // 1. Buat Pesanan Baru (Beli)
   Future<String?> createOrder(OrderModel order) async {
     try {
-      await _db.collection('orders').add(order.toMap());
-      return null;
+      await SupabaseService.client
+          .from('orders')
+          .insert(order.toSupabaseMap());
+      return null; // Sukses
     } catch (e) {
       return e.toString();
     }
@@ -16,12 +16,12 @@ class OrderService {
 
   // 2. Ambil Riwayat Pembelian (User sebagai pembeli)
   Stream<List<OrderModel>> getBuyerOrders(String uid) {
-    return _db
-        .collection('orders')
-        .where('buyerId', isEqualTo: uid)
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+    return SupabaseService.client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('buyer_id', uid)
+        .map((maps) {
+          final list = maps.map((map) => OrderModel.fromMap(map, map['id']?.toString() ?? '')).toList();
           list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return list;
         });
@@ -29,12 +29,12 @@ class OrderService {
 
   // 3. Ambil Riwayat Penjualan (User sebagai penjual)
   Stream<List<OrderModel>> getSellerOrders(String uid) {
-    return _db
-        .collection('orders')
-        .where('sellerId', isEqualTo: uid)
-        .snapshots()
-        .map((snap) {
-          final list = snap.docs.map((doc) => OrderModel.fromMap(doc.data(), doc.id)).toList();
+    return SupabaseService.client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('seller_id', uid)
+        .map((maps) {
+          final list = maps.map((map) => OrderModel.fromMap(map, map['id']?.toString() ?? '')).toList();
           list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return list;
         });
@@ -42,6 +42,13 @@ class OrderService {
 
   // 4. Update Status Pesanan
   Future<void> updateOrderStatus(String orderId, String status) async {
-    await _db.collection('orders').doc(orderId).update({'status': status});
+    try {
+      await SupabaseService.client
+          .from('orders')
+          .update({'status': status})
+          .eq('id', orderId);
+    } catch (e) {
+      print("Error update order status: $e");
+    }
   }
 }

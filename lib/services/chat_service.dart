@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:reloved/services/supabase_service.dart';
 
 class ChatRoomModel {
   final String id;
@@ -19,23 +19,48 @@ class ChatRoomModel {
   });
 
   factory ChatRoomModel.fromMap(Map<String, dynamic> map, String docId) {
+    // Helper to parse dynamic List to List<String>
+    final rawUserIds = map['user_ids'] ?? map['userIds'];
+    final List<String> parsedUserIds = rawUserIds != null 
+        ? List<String>.from(rawUserIds) 
+        : [];
+
+    // Helper to parse dynamic Map to Map<String, String>
+    final rawUserNames = map['user_names'] ?? map['userNames'] ?? {};
+    final Map<String, String> parsedUserNames = rawUserNames is Map 
+        ? rawUserNames.map((key, value) => MapEntry(key.toString(), value.toString()))
+        : {};
+
+    // Helper to parse last message time
+    final rawTime = map['last_message_time'] ?? map['lastMessageTime'];
+    final parsedTime = rawTime != null 
+        ? DateTime.parse(rawTime.toString()).toLocal() 
+        : DateTime.now();
+
+    // Helper to parse unread count
+    final rawUnread = map['unread_count'] ?? map['unreadCount'] ?? {};
+    final Map<String, int> parsedUnread = rawUnread is Map 
+        ? rawUnread.map((key, value) => MapEntry(key.toString(), int.tryParse(value.toString()) ?? 0))
+        : {};
+
     return ChatRoomModel(
       id: docId,
-      userIds: List<String>.from(map['userIds'] ?? []),
-      userNames: Map<String, String>.from(map['userNames'] ?? {}),
-      lastMessage: map['lastMessage'] ?? '',
-      lastMessageTime: (map['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      unreadCount: Map<String, int>.from(map['unreadCount'] ?? {}),
+      userIds: parsedUserIds,
+      userNames: parsedUserNames,
+      lastMessage: map['last_message'] ?? map['lastMessage'] ?? '',
+      lastMessageTime: parsedTime,
+      unreadCount: parsedUnread,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toSupabaseMap() {
     return {
-      'userIds': userIds,
-      'userNames': userNames,
-      'lastMessage': lastMessage,
-      'lastMessageTime': FieldValue.serverTimestamp(),
-      'unreadCount': unreadCount,
+      'id': id,
+      'user_ids': userIds,
+      'user_names': userNames,
+      'last_message': lastMessage,
+      'last_message_time': lastMessageTime.toUtc().toIso8601String(),
+      'unread_count': unreadCount,
     };
   }
 }
@@ -54,26 +79,29 @@ class MessageModel {
   });
 
   factory MessageModel.fromMap(Map<String, dynamic> map, String docId) {
+    final rawTime = map['created_at'] ?? map['createdAt'];
+    final parsedTime = rawTime != null 
+        ? DateTime.parse(rawTime.toString()).toLocal() 
+        : DateTime.now();
+
     return MessageModel(
       id: docId,
-      senderId: map['senderId'] ?? '',
+      senderId: map['sender_id'] ?? map['senderId'] ?? '',
       text: map['text'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: parsedTime,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toSupabaseMap(String roomId) {
     return {
-      'senderId': senderId,
+      'room_id': roomId,
+      'sender_id': senderId,
       'text': text,
-      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 }
 
 class ChatService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-
   // Mendapatkan atau membuat room chat antara 2 user
   Future<String> getOrCreateChatRoom({
     required String myId,
@@ -81,35 +109,47 @@ class ChatService {
     required String otherId,
     required String otherName,
   }) async {
-    // Generate Room ID unik dengan menggabungkan UID yang diurutkan alfabetis
     final sortedIds = [myId, otherId]..sort();
     final roomId = 'room_${sortedIds[0]}_${sortedIds[1]}';
 
-    final roomDoc = _db.collection('chat_rooms').doc(roomId);
-    final snapshot = await roomDoc.get();
+    try {
+      final existingRoom = await SupabaseService.client
+          .from('chat_rooms')
+          .select()
+          .eq('id', roomId)
+          .maybeSingle();
 
-    if (!snapshot.exists) {
-      final room = ChatRoomModel(
-        id: roomId,
-        userIds: [myId, otherId],
-        userNames: {
-          myId: myName,
-          otherId: otherName,
-        },
-        lastMessage: 'Memulai percakapan...',
-        lastMessageTime: DateTime.now(),
-        unreadCount: {
-          myId: 0,
-          otherId: 0,
-        },
-      );
-      await roomDoc.set(room.toMap());
-    } else {
-      // Update nama terbaru jika ada perubahan
-      await roomDoc.update({
-        'userNames.$myId': myName,
-        'userNames.$otherId': otherName,
-      });
+      if (existingRoom == null) {
+        final room = ChatRoomModel(
+          id: roomId,
+          userIds: [myId, otherId],
+          userNames: {
+            myId: myName,
+            otherId: otherName,
+          },
+          lastMessage: 'Memulai percakapan...',
+          lastMessageTime: DateTime.now(),
+          unreadCount: {
+            myId: 0,
+            otherId: 0,
+          },
+        );
+        await SupabaseService.client.from('chat_rooms').insert(room.toSupabaseMap());
+      } else {
+        // Update nama terbaru jika ada perubahan
+        final Map<String, String> userNames = Map<String, String>.from(
+          existingRoom['user_names'] ?? existingRoom['userNames'] ?? {}
+        );
+        userNames[myId] = myName;
+        userNames[otherId] = otherName;
+
+        await SupabaseService.client
+            .from('chat_rooms')
+            .update({'user_names': userNames})
+            .eq('id', roomId);
+      }
+    } catch (e) {
+      debugPrint("Gagal dapatkan/buat chat room: $e");
     }
 
     return roomId;
@@ -123,45 +163,73 @@ class ChatService {
   }) async {
     if (text.trim().isEmpty) return;
 
-    final messagesRef = _db.collection('chat_rooms').doc(roomId).collection('messages');
-    final roomRef = _db.collection('chat_rooms').doc(roomId);
+    try {
+      // 1. Simpan pesan baru ke tabel messages
+      final messageData = {
+        'room_id': roomId,
+        'sender_id': senderId,
+        'text': text.trim(),
+      };
+      await SupabaseService.client.from('messages').insert(messageData);
 
-    final batch = _db.batch();
+      // Cari ID penerima dari roomId (room_uid1_uid2)
+      final parts = roomId.split('_');
+      String otherId = '';
+      if (parts.length >= 3) {
+        otherId = parts[1] == senderId ? parts[2] : parts[1];
+      }
 
-    // 1. Simpan pesan baru
-    final newMessageDoc = messagesRef.doc();
-    batch.set(newMessageDoc, {
-      'senderId': senderId,
-      'text': text.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      // 2. Ambil data room untuk memperbarui lastMessage & unreadCount
+      final room = await SupabaseService.client
+          .from('chat_rooms')
+          .select()
+          .eq('id', roomId)
+          .maybeSingle();
 
-    // Cari ID penerima dari roomId (room_uid1_uid2)
-    final parts = roomId.split('_');
-    String otherId = '';
-    if (parts.length >= 3) {
-      otherId = parts[1] == senderId ? parts[2] : parts[1];
+      if (room != null) {
+        final unreadCount = Map<String, int>.from(
+          room['unread_count'] is Map 
+              ? room['unread_count'] 
+              : {}
+        );
+        
+        if (otherId.isNotEmpty) {
+          unreadCount[otherId] = (unreadCount[otherId] ?? 0) + 1;
+        }
+
+        await SupabaseService.client.from('chat_rooms').update({
+          'last_message': text.trim(),
+          'last_message_time': DateTime.now().toUtc().toIso8601String(),
+          'unread_count': unreadCount,
+        }).eq('id', roomId);
+      }
+    } catch (e) {
+      debugPrint("Gagal kirim pesan: $e");
     }
-
-    // 2. Update parent room dengan pesan terakhir dan increment unread count penerima
-    final Map<String, dynamic> updateData = {
-      'lastMessage': text.trim(),
-      'lastMessageTime': FieldValue.serverTimestamp(),
-    };
-    if (otherId.isNotEmpty) {
-      updateData['unreadCount.$otherId'] = FieldValue.increment(1);
-    }
-    batch.update(roomRef, updateData);
-
-    await batch.commit();
   }
 
   // Reset unread count milik user tertentu di chat room
   Future<void> clearUnreadCount(String roomId, String uid) async {
     try {
-      await _db.collection('chat_rooms').doc(roomId).update({
-        'unreadCount.$uid': 0,
-      });
+      final room = await SupabaseService.client
+          .from('chat_rooms')
+          .select()
+          .eq('id', roomId)
+          .maybeSingle();
+
+      if (room != null) {
+        final unreadCount = Map<String, int>.from(
+          room['unread_count'] is Map 
+              ? room['unread_count'] 
+              : {}
+        );
+        
+        unreadCount[uid] = 0;
+
+        await SupabaseService.client.from('chat_rooms').update({
+          'unread_count': unreadCount,
+        }).eq('id', roomId);
+      }
     } catch (e) {
       debugPrint("Gagal mereset unreadCount: $e");
     }
@@ -169,28 +237,28 @@ class ChatService {
 
   // Stream pesan di dalam room chat
   Stream<List<MessageModel>> getMessages(String roomId) {
-    return _db
-        .collection('chat_rooms')
-        .doc(roomId)
-        .collection('messages')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => MessageModel.fromMap(doc.data(), doc.id))
+    return SupabaseService.client
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('room_id', roomId)
+        .order('created_at', ascending: false)
+        .map((maps) => maps
+            .map((map) => MessageModel.fromMap(map, map['id']?.toString() ?? ''))
             .toList());
   }
 
   // Stream daftar chat room milik user tertentu
   Stream<List<ChatRoomModel>> getUserChatRooms(String uid) {
-    return _db
-        .collection('chat_rooms')
-        .where('userIds', arrayContains: uid)
-        .snapshots()
-        .map((snap) {
-          final rooms = snap.docs
-              .map((doc) => ChatRoomModel.fromMap(doc.data(), doc.id))
+    return SupabaseService.client
+        .from('chat_rooms')
+        .stream(primaryKey: ['id'])
+        .map((maps) {
+          final List<ChatRoomModel> rooms = maps
+              .map((map) => ChatRoomModel.fromMap(map, map['id']?.toString() ?? ''))
+              .where((room) => room.userIds.contains(uid))
               .toList();
-          // Urutkan berdasarkan waktu pesan terakhir menurun
+          
+          // Urutkan berdasarkan waktu pesan terakhir secara descending
           rooms.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
           return rooms;
         });

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class OrderModel {
   final String id;
   final String buyerId;
@@ -24,29 +22,34 @@ class OrderModel {
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> data, String docId) {
+    final rawTime = data['created_at'] ?? data['createdAt'];
+    final parsedTime = rawTime != null 
+        ? DateTime.parse(rawTime.toString()).toLocal() 
+        : DateTime.now();
+
     return OrderModel(
       id: docId,
-      buyerId: data['buyerId'] ?? '',
-      sellerId: data['sellerId'] ?? '',
-      productId: data['productId'] ?? '',
-      productName: data['productName'] ?? '',
+      buyerId: data['buyer_id'] ?? data['buyerId'] ?? '',
+      sellerId: data['seller_id'] ?? data['sellerId'] ?? '',
+      productId: data['product_id'] ?? data['productId'] ?? '',
+      productName: data['product_name'] ?? data['productName'] ?? '',
       price: data['price'] ?? 0,
       qty: data['qty'] ?? 1,
       status: data['status'] ?? 'Pending',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: parsedTime,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toSupabaseMap() {
     return {
-      'buyerId': buyerId,
-      'sellerId': sellerId,
-      'productId': productId,
-      'productName': productName,
+      'buyer_id': buyerId,
+      'seller_id': sellerId,
+      'product_id': productId,
+      'product_name': productName,
       'price': price,
       'qty': qty,
       'status': status,
-      'createdAt': FieldValue.serverTimestamp(),
+      'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:reloved/models/user_model.dart';
 import 'package:reloved/services/auth_service.dart';
 
@@ -14,10 +14,10 @@ class AuthProvider with ChangeNotifier {
 
   // Inisialisasi: Pantau status login secara otomatis
   AuthProvider() {
-    _authService.userStream.listen((User? firebaseUser) async {
-      if (firebaseUser != null) {
-        // Ambil role & data lengkap dari Firestore
-        _user = await _authService.getUserData(firebaseUser.uid);
+    _authService.userStream.listen((User? supabaseUser) async {
+      if (supabaseUser != null) {
+        // Ambil role & data lengkap dari Supabase
+        _user = await _authService.getUserData(supabaseUser.id);
       } else {
         _user = null;
       }
