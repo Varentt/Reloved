@@ -39,11 +39,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   String? _selectedCategory;
   String? _selectedCondition;
-  DateTime? _expiredDate;
   final List<String> _categories = [
-    'Barang Second',
-    'Produk Reject',
-    'Makanan Hampir Expired',
+    'Elektronik',
+    'Pakaian',
+    'Peralatan',
+    'Lainnya',
   ];
   final List<String> _conditions = [
     'Sangat Baik',
@@ -285,8 +285,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    if (_nameController.text.isEmpty || _priceController.text.isEmpty || _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Isi data wajib (Nama, Harga, Kategori)')));
+    if (_nameController.text.isEmpty || _priceController.text.isEmpty || _selectedCategory == null || _selectedCondition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Isi data wajib (Nama, Harga, Kategori, Kondisi)')));
       return;
     }
 
@@ -438,6 +438,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           hint: 'Pilih Kategori',
                           items: _categories,
                           onChanged: (val) => setState(() => _selectedCategory = val),
+                        ),
+
+                        const SizedBox(height: 14),
+                        _buildLabel('Kondisi Barang'),
+                        _buildDropdown(
+                          value: _selectedCondition,
+                          hint: 'Pilih Kondisi Barang',
+                          items: _conditions,
+                          onChanged: (val) => setState(() => _selectedCondition = val),
                         ),
 
                         const SizedBox(height: 14),

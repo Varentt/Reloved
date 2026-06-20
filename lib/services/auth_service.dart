@@ -14,6 +14,7 @@ class AuthService {
     required String email,
     required String password,
     required String name,
+    required String phone,
   }) async {
     try {
       // 1. Buat Akun di Supabase Auth
@@ -25,12 +26,13 @@ class AuthService {
       
       final User? user = response.user;
 
-      // 2. Simpan Data Tambahan (Nama & Role) ke tabel users
+      // 2. Simpan Data Tambahan (Nama, Telepon & Role) ke tabel users
       if (user != null) {
         await SupabaseService.client.from('users').insert({
           'id': user.id,
           'name': name,
           'email': email,
+          'phone': phone,
           'role': 'user', // Default pendaftar baru adalah user biasa
         });
       }

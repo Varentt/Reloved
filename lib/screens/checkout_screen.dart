@@ -42,33 +42,46 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isProcessing = false;
-  int _selectedAddress = 0;
+  int _selectedMethod = 0;
   int _selectedPayment = 0;
+  final _addressController = TextEditingController();
 
-  final List<Map<String, String>> _addresses = [
+  final List<Map<String, dynamic>> _deliveryMethods = [
     {
-      'name': 'Rumah',
-      'detail': 'Jl. Mawar No. 12, Jember, Jawa Timur 68111',
-      'receiver': 'Nama Lengkap • 08123456789',
+      'name': 'COD: Ketemu di Tengah',
+      'detail': 'Janjian titik temu di area publik terdekat via Chat & peta GPS setelah memesan.',
+      'icon': Icons.connect_without_contact_outlined,
+      'ongkir': 0,
     },
     {
-      'name': 'Kantor',
-      'detail': 'Jl. Semeru No. 45, Malang, Jawa Timur 65112',
-      'receiver': 'Nama Lengkap • 08123456789',
+      'name': 'COD: Ambil Sendiri (Self-Pickup)',
+      'detail': 'Datang langsung mengambil barang ke alamat penjual (lokasi penjual).',
+      'icon': Icons.storefront_outlined,
+      'ongkir': 0,
+    },
+    {
+      'name': 'COD: Antar ke Alamat (Delivery)',
+      'detail': 'Barang diantar oleh kurir lokal/penjual ke rumah Anda. Bayar di tempat.',
+      'icon': Icons.local_shipping_outlined,
+      'ongkir': 15000,
     },
   ];
 
   final List<Map<String, dynamic>> _payments = [
-    {'name': 'Transfer Bank', 'sub': 'BCA, BRI, BNI, Mandiri', 'icon': Icons.account_balance_outlined},
-    {'name': 'Dompet Digital', 'sub': 'GoPay, OVO, Dana, ShopeePay', 'icon': Icons.account_balance_wallet_outlined},
-    {'name': 'Bayar di Tempat', 'sub': 'COD - Cash On Delivery', 'icon': Icons.payments_outlined},
+    {'name': 'Bayar di Tempat (COD)', 'sub': 'Bayar tunai saat barang diterima', 'icon': Icons.payments_outlined},
   ];
 
   int get _subtotal => widget.products.fold(
       0, (sum, p) => sum + (p['price'] as int) * (p['qty'] as int));
 
-  final int _ongkir = 15000;
+  int get _ongkir => _deliveryMethods[_selectedMethod]['ongkir'] as int;
   int get _total => _subtotal + _ongkir;
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    super.dispose();
+  }
 
   String _toRupiah(int val) {
     final str = val.toString();
@@ -99,10 +112,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       }
     }
 
+    if (_selectedMethod == 2 && _addressController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Alamat pengantaran wajib diisi!'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isProcessing = true);
 
     final orderService = OrderService();
     bool success = true;
+
+    String initialLoc = "Ketemu di Tengah (Janjian via Chat/GPS)";
+    if (_selectedMethod == 1) {
+      initialLoc = "Ambil Sendiri (Di Lokasi Penjual)";
+    } else if (_selectedMethod == 2) {
+      initialLoc = _addressController.text.trim();
+    }
 
     for (var p in widget.products) {
       final order = OrderModel(
@@ -115,6 +145,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         qty: p['qty'] as int,
         status: 'Pending',
         createdAt: DateTime.now(),
+        meetupLocation: initialLoc,
+        meetupStatus: 'None',
       );
 
       final error = await orderService.createOrder(order);
@@ -174,6 +206,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
     final sellerName = widget.products.first['seller'] as String;
 
     return Scaffold(
@@ -311,12 +345,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
 
                   const SizedBox(height: 20),
-                  const _SectionTitle(title: 'Alamat Pengiriman'),
-                  ...List.generate(_addresses.length, (i) {
-                    final addr = _addresses[i];
-                    final selected = _selectedAddress == i;
+                  const _SectionTitle(title: 'Pilihan Metode COD & Pengiriman'),
+                  ...List.generate(_deliveryMethods.length, (i) {
+                    final method = _deliveryMethods[i];
+                    final selected = _selectedMethod == i;
                     return GestureDetector(
-                      onTap: () => setState(() => _selectedAddress = i),
+                      onTap: () => setState(() => _selectedMethod = i),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
@@ -337,7 +371,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 color: selected ? _primary.withOpacity(0.1) : _surface,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(Icons.location_on_outlined,
+                              child: Icon(method['icon'] as IconData,
                                   color: selected ? _primary : _textSecondary, size: 20),
                             ),
                             const SizedBox(width: 12),
@@ -345,31 +379,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: selected ? _primary : _surface,
-                                      borderRadius: BorderRadius.circular(5),
-                                    ),
-                                    child: Text(addr['name']!,
-                                        style: TextStyle(
-                                            color: selected ? Colors.white : _textSecondary,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700)),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(addr['receiver']!,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: _textPrimary)),
-                                  const SizedBox(height: 2),
-                                  Text(addr['detail']!,
-                                      style: const TextStyle(fontSize: 12, color: _textSecondary, height: 1.4)),
+                                  Text(method['name'] as String,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
+                                  const SizedBox(height: 4),
+                                  Text(method['detail'] as String,
+                                      style: const TextStyle(fontSize: 11, color: _textSecondary, height: 1.4)),
                                 ],
                               ),
                             ),
                             Radio<int>(
                               value: i,
-                              groupValue: _selectedAddress,
-                              onChanged: (val) => setState(() => _selectedAddress = val!),
+                              groupValue: _selectedMethod,
+                              onChanged: (val) => setState(() => _selectedMethod = val!),
                               activeColor: _primary,
                             ),
                           ],
@@ -377,6 +398,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     );
                   }),
+                  if (_selectedMethod == 2) ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Alamat Pengantaran Lengkap',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _textPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _addressController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: 'Tuliskan alamat lengkap pengantaran Anda (kos/rumah)...',
+                        hintStyle: const TextStyle(fontSize: 12, color: _textSecondary),
+                        fillColor: Colors.white,
+                        filled: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _accent),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: _primary),
+                        ),
+                      ),
+                      style: const TextStyle(fontSize: 13, color: _textPrimary),
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
                   const _SectionTitle(title: 'Metode Pembayaran'),

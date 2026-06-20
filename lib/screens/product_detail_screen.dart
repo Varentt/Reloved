@@ -10,6 +10,7 @@ import 'package:reloved/services/favorite_service.dart';
 import 'package:reloved/utils/cart_manager.dart';
 import 'package:reloved/services/chat_service.dart';
 import 'package:reloved/screens/chat_screen.dart';
+import 'package:reloved/utils/whatsapp_helper.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _accent = Color(0xFFD0E2F2);
@@ -243,7 +244,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ],
                                 ),
                               ),
-                              if (!isOwner && !_isLoadingSeller && _seller != null)
+                              if (!isOwner && !_isLoadingSeller && _seller != null) ...[
+                                if (_seller!.phone != null && _seller!.phone!.trim().isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.phone_outlined, color: Colors.green),
+                                    tooltip: 'Hubungi via WhatsApp',
+                                    onPressed: () => _launchWhatsApp(
+                                      _seller!.phone!,
+                                      widget.product.name,
+                                    ),
+                                  ),
                                 IconButton(
                                   icon: const Icon(Icons.chat_bubble_outline, color: _primary),
                                   onPressed: () async {
@@ -271,6 +281,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     );
                                   },
                                 ),
+                              ],
                             ],
                           ),
                         ),
@@ -447,6 +458,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _launchWhatsApp(String phone, String productName) async {
+    final message = "Halo, saya tertarik dengan produk Anda: $productName di Reloved.";
+    await WhatsAppHelper.launchWhatsApp(
+      phone: phone,
+      message: message,
+      context: context,
     );
   }
 }

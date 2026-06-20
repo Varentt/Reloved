@@ -51,5 +51,12 @@
 	<string>Aplikasi ini memerlukan akses ke galeri untuk memilih foto profil.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Aplikasi ini memerlukan akses ke mikrofon.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+		<string>tel</string>
+		<string>https</string>
+		<string>http</string>
+	</array>
 </dict>
 </plist>

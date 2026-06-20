@@ -29,7 +29,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   String? _selectedCategory;
   String? _selectedCondition;
-  DateTime? _expiredDate;
   int _stok = 1;
   bool _isLoading = false;
 
@@ -37,9 +36,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
   final ImagePicker _picker = ImagePicker();
 
   final List<String> _categories = [
-    'Barang Second',
-    'Produk Reject',
-    'Makanan Hampir Expired',
+    'Elektronik',
+    'Pakaian',
+    'Peralatan',
+    'Lainnya',
   ];
   final List<String> _conditions = [
     'Sangat Baik',
@@ -436,53 +436,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           items: _conditions,
                           onChanged: (val) => setState(() => _selectedCondition = val),
                         ),
-
-                        // Tanggal Kedaluwarsa
-                        if (_selectedCategory == 'Makanan Hampir Expired') ...[
-                          const SizedBox(height: 14),
-                          _buildLabel('Tanggal Kedaluwarsa'),
-                          InkWell(
-                            onTap: () async {
-                              final pickedDate = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime.now(),
-                                lastDate: DateTime(2035),
-                                builder: (context, child) => Theme(
-                                  data: Theme.of(context).copyWith(
-                                    colorScheme: const ColorScheme.light(primary: _primary),
-                                  ),
-                                  child: child!,
-                                ),
-                              );
-                              if (pickedDate != null) {
-                                setState(() => _expiredDate = pickedDate);
-                              }
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: _accent),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.calendar_today_outlined, size: 18, color: _primary),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    _expiredDate == null
-                                        ? 'Pilih Tanggal Kedaluwarsa'
-                                        : '${_expiredDate!.day}/${_expiredDate!.month}/${_expiredDate!.year}',
-                                    style: TextStyle(
-                                        color: _expiredDate == null ? _textSecondary : _textPrimary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
 
                         const SizedBox(height: 14),
 

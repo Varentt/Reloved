@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _nameRegCtrl = TextEditingController();
   final _emailRegCtrl = TextEditingController();
   final _passRegCtrl = TextEditingController();
+  final _phoneRegCtrl = TextEditingController();
   bool _regPassVisible = false;
 
   @override
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _nameRegCtrl.dispose();
     _emailRegCtrl.dispose();
     _passRegCtrl.dispose();
+    _phoneRegCtrl.dispose();
     super.dispose();
   }
 
@@ -82,8 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final name = _nameRegCtrl.text.trim();
     final email = _emailRegCtrl.text.trim();
     final password = _passRegCtrl.text;
+    final phone = _phoneRegCtrl.text.trim();
 
-    final error = await authProvider.register(name, email, password);
+    final error = await authProvider.register(name, email, password, phone);
 
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   formKey: _registerFormKey,
                   nameCtrl: _nameRegCtrl,
                   emailCtrl: _emailRegCtrl,
+                  phoneCtrl: _phoneRegCtrl,
                   passCtrl: _passRegCtrl,
                   passVisible: _regPassVisible,
                   onTogglePass: () =>
@@ -759,6 +763,7 @@ class _RegisterForm extends StatelessWidget {
     required this.formKey,
     required this.nameCtrl,
     required this.emailCtrl,
+    required this.phoneCtrl,
     required this.passCtrl,
     required this.passVisible,
     required this.onTogglePass,
@@ -769,6 +774,7 @@ class _RegisterForm extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController nameCtrl;
   final TextEditingController emailCtrl;
+  final TextEditingController phoneCtrl;
   final TextEditingController passCtrl;
   final bool passVisible;
   final VoidCallback onTogglePass;
@@ -824,6 +830,23 @@ class _RegisterForm extends StatelessWidget {
                 return 'Email tidak boleh kosong';
               final reg = RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$');
               if (!reg.hasMatch(v.trim())) return 'Format email tidak valid';
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: phoneCtrl,
+            keyboardType: TextInputType.phone,
+            decoration: _inputDeco(
+              label: 'No. Telepon',
+              hint: '08123456789',
+              icon: Icons.phone_outlined,
+            ),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty)
+                return 'No. Telepon tidak boleh kosong';
+              if (v.trim().length < 8)
+                return 'No. Telepon tidak valid';
               return null;
             },
           ),

@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/chat_service.dart';
+import 'package:reloved/models/user_model.dart';
+import 'package:reloved/services/auth_service.dart';
+import 'package:reloved/utils/whatsapp_helper.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -33,11 +36,22 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   final _chatService = ChatService();
   StreamSubscription? _messageSubscription;
+  UserModel? _otherUser;
 
   @override
   void initState() {
     super.initState();
     _clearUnread();
+    _loadOtherUser();
+  }
+
+  void _loadOtherUser() async {
+    final s = await AuthService().getUserData(widget.otherId);
+    if (mounted) {
+      setState(() {
+        _otherUser = s;
+      });
+    }
   }
 
   void _clearUnread() {
@@ -83,6 +97,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
   String _formatTime(DateTime date) {
     return DateFormat('HH:mm').format(date);
+  }
+
+  Future<void> _makePhoneCall(String phone) async {
+    await WhatsAppHelper.makePhoneCall(phone: phone, context: context);
+  }
+
+  Future<void> _launchWhatsApp(String phone, String message) async {
+    await WhatsAppHelper.launchWhatsApp(
+      phone: phone,
+      message: message,
+      context: context,
+    );
   }
 
   @override
@@ -139,6 +165,23 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+        actions: [
+          if (_otherUser?.phone != null && _otherUser!.phone!.trim().isNotEmpty) ...[
+            IconButton(
+              icon: const Icon(Icons.phone_outlined, color: Colors.white),
+              tooltip: 'Panggil',
+              onPressed: () => _makePhoneCall(_otherUser!.phone!),
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat_outlined, color: Colors.white),
+              tooltip: 'WhatsApp',
+              onPressed: () => _launchWhatsApp(
+                _otherUser!.phone!,
+                "Halo ${widget.otherName}, saya menghubungi Anda melalui aplikasi Reloved.",
+              ),
+            ),
+          ],
+        ],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(

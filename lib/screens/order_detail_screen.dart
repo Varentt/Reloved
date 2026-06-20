@@ -6,6 +6,11 @@ import 'package:reloved/models/user_model.dart';
 import 'package:reloved/services/auth_service.dart';
 import 'package:reloved/services/product_service.dart';
 import 'package:reloved/services/order_service.dart';
+import 'package:reloved/services/supabase_service.dart';
+import 'package:reloved/utils/whatsapp_helper.dart';
+import 'package:reloved/screens/map_picker_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -31,12 +36,35 @@ class OrderDetailScreen extends StatefulWidget {
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   late String _currentStatus;
   late final Future<Map<String, dynamic>> _detailsFuture;
+  late OrderModel _order;
+  StreamSubscription? _orderSubscription;
 
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.order.status;
+    _order = widget.order;
+    _currentStatus = _order.status;
     _detailsFuture = _fetchDetails();
+
+    // Dengar perubahan status & janjian secara realtime
+    _orderSubscription = SupabaseService.client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('id', _order.id)
+        .listen((maps) {
+          if (maps.isNotEmpty && mounted) {
+            setState(() {
+              _order = OrderModel.fromMap(maps.first, maps.first['id']?.toString() ?? '');
+              _currentStatus = _order.status;
+            });
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    _orderSubscription?.cancel();
+    super.dispose();
   }
 
   Future<Map<String, dynamic>> _fetchDetails() async {
@@ -280,6 +308,144 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  String _formatDateTime(DateTime dt) {
+    try {
+      return DateFormat('EEEE, d MMMM yyyy, HH:mm', 'id_ID').format(dt);
+    } catch (_) {
+      return DateFormat('EEEE, d MMMM yyyy - HH:mm').format(dt);
+    }
+  }
+
+  Future<void> _openGoogleMaps(double lat, double lng) async {
+    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    try {
+      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka Google Maps')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showJadwalkanCodBottomSheet() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MapPickerScreen()),
+    );
+
+    if (result == null || result is! Map<String, dynamic>) return;
+
+    final String address = result['address'] ?? '';
+    final double latitude = result['latitude'] ?? 0.0;
+    final double longitude = result['longitude'] ?? 0.0;
+
+    if (!mounted) return;
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      helpText: 'Pilih Tanggal Pertemuan COD',
+    );
+    if (pickedDate == null) return;
+
+    if (!mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 16, minute: 0),
+      helpText: 'Pilih Jam Pertemuan COD',
+    );
+    if (pickedTime == null) return;
+
+    final meetupTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    final String whoProposed = widget.type == 'pembelian' ? 'ProposedByBuyer' : 'ProposedBySeller';
+
+    await OrderService().updateOrderMeetup(
+      orderId: _order.id,
+      location: address,
+      latitude: latitude,
+      longitude: longitude,
+      time: meetupTime,
+      meetupStatus: whoProposed,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pengajuan lokasi COD berhasil dikirim!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _konfirmasiJadwalCod() async {
+    await OrderService().updateMeetupStatus(_order.id, 'Agreed');
+    await OrderService().updateOrderStatus(_order.id, 'Dikirim');
+    
+    setState(() {
+      _currentStatus = 'Dikirim';
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Jadwal COD disetujui! Status pesanan kini siap ketemuan.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  Future<void> _tolakJadwalCod() async {
+    await OrderService().updateMeetupStatus(_order.id, 'None');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Jadwal COD ditolak. Silakan ajukan jadwal baru.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  Widget _buildMeetupDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: _textSecondary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 12, color: _textPrimary, height: 1.4),
+              children: [
+                TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPembelian = widget.type == 'pembelian';
@@ -438,6 +604,143 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
                         const SizedBox(height: 12),
 
+                        // ── Kesepakatan Titik COD (GPS) ──
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.connect_without_contact_outlined, color: _primary, size: 20),
+                                  SizedBox(width: 8),
+                                  Text('Kesepakatan Pertemuan COD',
+                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _textPrimary)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (_order.meetupStatus == 'None') ...[
+                                const Text(
+                                  'Titik janjian lokasi & waktu COD belum ditentukan.',
+                                  style: TextStyle(fontSize: 12, color: _textSecondary, height: 1.4),
+                                ),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: _showJadwalkanCodBottomSheet,
+                                    icon: const Icon(Icons.map_outlined, size: 16),
+                                    label: const Text('Jadwalkan Lokasi COD (GPS)'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _primary,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      elevation: 0,
+                                    ),
+                                  ),
+                                ),
+                              ] else if (_order.meetupStatus == 'ProposedByBuyer' || _order.meetupStatus == 'ProposedBySeller') ...[
+                                const Text(
+                                  'Status: Menunggu Persetujuan Jadwal',
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.orange),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildMeetupDetailRow(Icons.pin_drop_outlined, 'Lokasi', _order.meetupLocation ?? ''),
+                                const SizedBox(height: 6),
+                                _buildMeetupDetailRow(Icons.access_time, 'Waktu', _order.meetupTime != null ? _formatDateTime(_order.meetupTime!) : ''),
+                                const SizedBox(height: 12),
+                                if ((widget.type == 'pembelian' && _order.meetupStatus == 'ProposedBySeller') ||
+                                    (widget.type == 'penjualan' && _order.meetupStatus == 'ProposedByBuyer')) ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: _tolakJadwalCod,
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.redAccent,
+                                            side: const BorderSide(color: Colors.redAccent),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          ),
+                                          child: const Text('Tolak & Ubah'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: _konfirmasiJadwalCod,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text('Setujui'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ] else ...[
+                                  Text(
+                                    widget.type == 'pembelian'
+                                        ? 'Menunggu penjual menyetujui janjian...'
+                                        : 'Menunggu pembeli menyetujui janjian...',
+                                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: _textSecondary),
+                                  ),
+                                ],
+                              ] else if (_order.meetupStatus == 'Agreed') ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.check_circle_outline, color: Colors.green, size: 16),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Jadwal COD Terkunci & Disetujui',
+                                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Colors.green),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildMeetupDetailRow(Icons.pin_drop_outlined, 'Lokasi', _order.meetupLocation ?? ''),
+                                const SizedBox(height: 6),
+                                _buildMeetupDetailRow(Icons.access_time, 'Waktu', _order.meetupTime != null ? _formatDateTime(_order.meetupTime!) : ''),
+                                if (_order.meetupLatitude != null && _order.meetupLongitude != null) ...[
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _openGoogleMaps(_order.meetupLatitude!, _order.meetupLongitude!),
+                                      icon: const Icon(Icons.navigation_outlined, size: 16),
+                                      label: const Text('Buka Rute Google Maps (GPS)'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        elevation: 0,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
                         // ── Info Produk ──
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -534,6 +837,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   icon: Icons.phone_outlined,
                                   label: 'No. Telepon Penjual',
                                   value: seller?.phone ?? 'Belum ditambahkan',
+                                  onTap: (seller?.phone != null && seller!.phone!.trim().isNotEmpty)
+                                      ? () => _launchWhatsApp(
+                                            seller!.phone!,
+                                            "Halo, saya pembeli di Reloved ingin menanyakan pesanan #${widget.order.id} untuk produk ${product?.name ?? ''}.",
+                                          )
+                                      : null,
                                 ),
                               ] else ...[
                                 _DetailRow(icon: Icons.person_outline, label: 'Nama Pembeli', value: buyer?.name ?? '-'),
@@ -544,6 +853,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   icon: Icons.phone_outlined,
                                   label: 'No. Telepon Pembeli',
                                   value: buyer?.phone ?? 'Belum ditambahkan',
+                                  onTap: (buyer?.phone != null && buyer!.phone!.trim().isNotEmpty)
+                                      ? () => _launchWhatsApp(
+                                            buyer!.phone!,
+                                            "Halo, saya penjual di Reloved ingin mengonfirmasi pesanan #${widget.order.id} untuk produk ${product?.name ?? ''}.",
+                                          )
+                                      : null,
                                 ),
                               ],
                             ],
@@ -707,17 +1022,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       default: return Icons.circle;
     }
   }
+
+
+  Future<void> _launchWhatsApp(String phone, String message) async {
+    await WhatsAppHelper.launchWhatsApp(
+      phone: phone,
+      message: message,
+      context: context,
+    );
+  }
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow({required this.icon, required this.label, required this.value, this.onTap});
   final IconData icon;
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final widgetContent = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16, color: _primary),
@@ -728,12 +1053,32 @@ class _DetailRow extends StatelessWidget {
             children: [
               Text(label, style: const TextStyle(fontSize: 11, color: _textSecondary)),
               const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _textPrimary)),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: onTap != null ? _primary : _textPrimary,
+                  decoration: onTap != null ? TextDecoration.underline : null,
+                ),
+              ),
             ],
           ),
         ),
       ],
     );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: widgetContent,
+        ),
+      );
+    }
+
+    return widgetContent;
   }
 }
 

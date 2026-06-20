@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:reloved/models/order_model.dart';
 import 'package:reloved/services/supabase_service.dart';
 
@@ -48,7 +49,44 @@ class OrderService {
           .update({'status': status})
           .eq('id', orderId);
     } catch (e) {
-      print("Error update order status: $e");
+      debugPrint("Error update order status: $e");
+    }
+  }
+
+  // 5. Update Jadwal & Lokasi COD
+  Future<void> updateOrderMeetup({
+    required String orderId,
+    required String location,
+    required double latitude,
+    required double longitude,
+    required DateTime time,
+    required String meetupStatus,
+  }) async {
+    try {
+      await SupabaseService.client
+          .from('orders')
+          .update({
+            'meetup_location': location,
+            'meetup_latitude': latitude,
+            'meetup_longitude': longitude,
+            'meetup_time': time.toUtc().toIso8601String(),
+            'meetup_status': meetupStatus,
+          })
+          .eq('id', orderId);
+    } catch (e) {
+      debugPrint("Error update order meetup: $e");
+    }
+  }
+
+  // 6. Update Status Persetujuan Janjian
+  Future<void> updateMeetupStatus(String orderId, String meetupStatus) async {
+    try {
+      await SupabaseService.client
+          .from('orders')
+          .update({'meetup_status': meetupStatus})
+          .eq('id', orderId);
+    } catch (e) {
+      debugPrint("Error update meetup status: $e");
     }
   }
 }

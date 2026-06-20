@@ -8,6 +8,11 @@ class OrderModel {
   final int qty;
   final String status; // 'Pending', 'Diproses', 'Dikirim', 'Selesai'
   final DateTime createdAt;
+  final String? meetupLocation;
+  final double? meetupLatitude;
+  final double? meetupLongitude;
+  final DateTime? meetupTime;
+  final String meetupStatus; // 'None', 'Proposed', 'Agreed'
 
   OrderModel({
     required this.id,
@@ -19,6 +24,11 @@ class OrderModel {
     this.qty = 1,
     required this.status,
     required this.createdAt,
+    this.meetupLocation,
+    this.meetupLatitude,
+    this.meetupLongitude,
+    this.meetupTime,
+    this.meetupStatus = 'None',
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> data, String docId) {
@@ -26,6 +36,11 @@ class OrderModel {
     final parsedTime = rawTime != null 
         ? DateTime.parse(rawTime.toString()).toLocal() 
         : DateTime.now();
+
+    final rawMeetupTime = data['meetup_time'] ?? data['meetupTime'];
+    final parsedMeetupTime = rawMeetupTime != null 
+        ? DateTime.parse(rawMeetupTime.toString()).toLocal() 
+        : null;
 
     return OrderModel(
       id: docId,
@@ -37,6 +52,11 @@ class OrderModel {
       qty: data['qty'] ?? 1,
       status: data['status'] ?? 'Pending',
       createdAt: parsedTime,
+      meetupLocation: data['meetup_location'] ?? data['meetupLocation'],
+      meetupLatitude: (data['meetup_latitude'] ?? data['meetupLatitude'])?.toDouble(),
+      meetupLongitude: (data['meetup_longitude'] ?? data['meetupLongitude'])?.toDouble(),
+      meetupTime: parsedMeetupTime,
+      meetupStatus: data['meetup_status'] ?? data['meetupStatus'] ?? 'None',
     );
   }
 
@@ -50,6 +70,11 @@ class OrderModel {
       'qty': qty,
       'status': status,
       'created_at': createdAt.toUtc().toIso8601String(),
+      'meetup_location': meetupLocation,
+      'meetup_latitude': meetupLatitude,
+      'meetup_longitude': meetupLongitude,
+      'meetup_time': meetupTime?.toUtc().toIso8601String(),
+      'meetup_status': meetupStatus,
     };
   }
 }
