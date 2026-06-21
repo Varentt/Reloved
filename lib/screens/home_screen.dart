@@ -7,7 +7,6 @@ import 'package:reloved/screens/product_category_screen.dart';
 import 'package:reloved/screens/notification_screen.dart';
 import 'package:reloved/screens/cart_screen.dart';
 import 'package:reloved/screens/favorite_screen.dart';
-import 'package:reloved/screens/add_product_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -27,8 +26,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final _productService = ProductService();
 
   String _formatRupiah(int price) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)
-        .format(price);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp',
+      decimalDigits: 0,
+    ).format(price);
   }
 
   @override
@@ -100,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     decoration: InputDecoration(
-                      hintText: 'Cari barang bekas, pakaian, elektronik...',
+                      hintText: 'Cari barang second, reject, expired...',
                       hintStyle: const TextStyle(
                         fontSize: 13,
                         color: _textSecondary,
@@ -158,52 +160,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.devices,
-                                label: 'Elektronik',
+                                icon: Icons.recycling,
+                                label: 'Barang\nSecond',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Elektronik',
-                                  'ELEKTRONIK',
+                                  'Barang Second',
+                                  'SECOND',
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.checkroom,
-                                label: 'Pakaian',
+                                icon: Icons.inventory_2_outlined,
+                                label: 'Produk\nReject',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Pakaian',
-                                  'PAKAIAN',
+                                  'Produk Reject',
+                                  'REJECT',
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.bed_outlined,
-                                label: 'Peralatan',
+                                icon: Icons.fastfood_outlined,
+                                label: 'Hampir\nExpired',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Peralatan',
-                                  'PERALATAN',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _CategoryCard(
-                                icon: Icons.more_horiz,
-                                label: 'Lainnya',
-                                color: _primary,
-                                onTap: () => _goCategory(
-                                  context,
-                                  'Lainnya',
-                                  'LAINNYA',
+                                  'Makanan Hampir Expired',
+                                  'EXPIRED',
                                 ),
                               ),
                             ),
@@ -228,27 +217,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       StreamBuilder<List<ProductModel>>(
                         stream: _productService.activeProductsStream,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
                             return const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(40.0),
-                                child: CircularProgressIndicator(color: _primary),
+                                child: CircularProgressIndicator(
+                                  color: _primary,
+                                ),
                               ),
                             );
                           }
-                          
+
                           final products = snapshot.data ?? [];
-                          
+
                           if (products.isEmpty) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 60),
                               child: Center(
                                 child: Column(
                                   children: [
-                                    Icon(Icons.inventory_2_outlined, size: 50, color: _textSecondary),
+                                    Icon(
+                                      Icons.inventory_2_outlined,
+                                      size: 50,
+                                      color: _textSecondary,
+                                    ),
                                     SizedBox(height: 12),
-                                    Text('Belum ada barang yang dijual', 
-                                    style: TextStyle(color: _textSecondary, fontSize: 13)),
+                                    Text(
+                                      'Belum ada barang yang dijual',
+                                      style: TextStyle(
+                                        color: _textSecondary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -257,24 +258,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           return LayoutBuilder(
                             builder: (context, constraints) {
-                              final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+                              final crossAxisCount = constraints.maxWidth < 600
+                                  ? 2
+                                  : 4;
                               const padding = 16.0;
                               const spacing = 8.0;
-                              final cardWidth = (constraints.maxWidth - padding * 2 - spacing * (crossAxisCount - 1)) / crossAxisCount;
+                              final cardWidth =
+                                  (constraints.maxWidth -
+                                      padding * 2 -
+                                      spacing * (crossAxisCount - 1)) /
+                                  crossAxisCount;
                               final cardHeight = cardWidth + 80.0;
                               final ratio = cardWidth / cardHeight;
 
                               return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: padding),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: padding,
+                                ),
                                 child: GridView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: crossAxisCount,
-                                    childAspectRatio: ratio,
-                                    crossAxisSpacing: spacing,
-                                    mainAxisSpacing: spacing,
-                                  ),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: crossAxisCount,
+                                        childAspectRatio: ratio,
+                                        crossAxisSpacing: spacing,
+                                        mainAxisSpacing: spacing,
+                                      ),
                                   itemCount: products.length,
                                   itemBuilder: (context, i) => _ProductCard(
                                     product: products[i],
@@ -530,8 +540,11 @@ class _ProductCard extends StatelessWidget {
   }
 
   String _formatRupiah(int price) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0)
-        .format(price);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp',
+      decimalDigits: 0,
+    ).format(price);
   }
 
   @override
@@ -568,14 +581,14 @@ class _ProductCard extends StatelessWidget {
                       ),
                     ),
                     child: product.imageUrl.isNotEmpty
-                      ? Image.network(product.imageUrl, fit: BoxFit.cover)
-                      : const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 22,
-                            color: _textSecondary,
+                        ? Image.network(product.imageUrl, fit: BoxFit.cover)
+                        : const Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 22,
+                              color: _textSecondary,
+                            ),
                           ),
-                        ),
                   ),
                   Positioned(
                     top: 3,

@@ -5,6 +5,7 @@ import 'package:reloved/models/product_model.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/order_service.dart';
 import 'package:reloved/services/product_service.dart';
+import 'package:reloved/services/notification_service.dart';
 import 'package:reloved/utils/cart_manager.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -304,6 +305,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
         break;
       } else {
+        // Send notification to seller
+        NotificationService().sendNotification(
+          userId: p['ownerId'],
+          type: 'order',
+          title: 'Produk Telah Dibeli!',
+          body: 'Pengguna "${user.name}" telah membeli produk "${p['name']}" Anda seharga ${_toRupiah(p['price'] as int)}. Silakan konfirmasi pesanan.',
+          data: {
+            'productId': p['id'],
+            'productName': p['name'],
+          },
+        );
+
         // Decrement stock in Supabase
         try {
           final pService = ProductService();

@@ -50,18 +50,32 @@ class ProfileScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Profil Saya',
-                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                          const Text(
+                            'Profil Saya',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                           GestureDetector(
-                            onTap: () => Navigator.push(context,
-                                MaterialPageRoute(builder: (_) => const PengaturanAkunScreen())),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const PengaturanAkunScreen(),
+                              ),
+                            ),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.edit_outlined, color: Colors.white, size: 18),
+                              child: const Icon(
+                                Icons.edit_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                             ),
                           ),
                         ],
@@ -72,17 +86,28 @@ class ProfileScreen extends StatelessWidget {
                           Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.4), width: 3),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 3,
+                              ),
                             ),
                             child: CircleAvatar(
                               radius: 38,
                               backgroundColor: _accent.withOpacity(0.3),
-                              backgroundImage: user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                              backgroundImage:
+                                  user?.photoUrl != null &&
+                                      user!.photoUrl!.isNotEmpty
                                   ? NetworkImage(user.photoUrl!)
                                   : null,
-                              child: user?.photoUrl != null && user!.photoUrl!.isNotEmpty
+                              child:
+                                  user?.photoUrl != null &&
+                                      user!.photoUrl!.isNotEmpty
                                   ? null
-                                  : const Icon(Icons.person, size: 46, color: Colors.white),
+                                  : const Icon(
+                                      Icons.person,
+                                      size: 46,
+                                      color: Colors.white,
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -90,28 +115,51 @@ class ProfileScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(user?.name ?? 'Nama Lengkap',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                                Text(
+                                  user?.name ?? 'Nama Lengkap',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
                                 const SizedBox(height: 2),
-                                Text(user?.email ?? 'user@email.com',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text(
+                                  user?.email ?? 'user@email.com',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
                                     StreamBuilder<List<OrderModel>>(
-                                      stream: OrderService().getBuyerOrders(user?.uid ?? ''),
+                                      stream: OrderService().getBuyerOrders(
+                                        user?.uid ?? '',
+                                      ),
                                       builder: (context, snapshot) {
-                                        final count = snapshot.data?.length ?? 0;
-                                        return _StatBadge(label: 'Pembelian', value: '$count');
-                                      }
+                                        final count =
+                                            snapshot.data?.length ?? 0;
+                                        return _StatBadge(
+                                          label: 'Pembelian',
+                                          value: '$count',
+                                        );
+                                      },
                                     ),
                                     const SizedBox(width: 10),
                                     StreamBuilder<List<ProductModel>>(
-                                      stream: ProductService().getMyProducts(user?.uid ?? ''),
+                                      stream: ProductService().getMyProducts(
+                                        user?.uid ?? '',
+                                      ),
                                       builder: (context, snapshot) {
-                                        final count = snapshot.data?.length ?? 0;
-                                        return _StatBadge(label: 'Penjualan', value: '$count');
-                                      }
+                                        final count =
+                                            snapshot.data?.length ?? 0;
+                                        return _StatBadge(
+                                          label: 'Penjualan',
+                                          value: '$count',
+                                        );
+                                      },
                                     ),
                                   ],
                                 ),
@@ -134,15 +182,21 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.history,
               label: 'Riwayat Transaksi',
               iconColor: _primary,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const RiwayatTransaksiScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RiwayatTransaksiScreen(),
+                ),
+              ),
             ),
             _MenuItem(
               icon: Icons.location_on_outlined,
               label: 'Daftar Alamat',
               iconColor: _primary,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const DaftarAlamatScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DaftarAlamatScreen()),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -153,15 +207,21 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.inventory_2_outlined,
               label: 'Produk Saya',
               iconColor: _primary,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const MyProductsScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyProductsScreen()),
+              ),
             ),
             _MenuItem(
               icon: Icons.analytics_outlined,
               label: 'Statistik Penjualan',
               iconColor: _primary,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const StatistikPenjualanScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const StatistikPenjualanScreen(),
+                ),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -172,8 +232,10 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.settings_outlined,
               label: 'Pengaturan Akun',
               iconColor: _textSecondary,
-              onTap: () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const PengaturanAkunScreen())),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PengaturanAkunScreen()),
+              ),
             ),
             _MenuItem(
               icon: Icons.logout,
@@ -196,7 +258,10 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Keluar',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: const Text('Yakin ingin keluar dari akun?'),
         actions: [
           TextButton(
@@ -217,7 +282,9 @@ class ProfileScreen extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Keluar', style: TextStyle(color: Colors.white)),
           ),
@@ -242,9 +309,18 @@ class _StatBadge extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 9)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 9),
+          ),
         ],
       ),
     );
@@ -261,9 +337,15 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w700, color: _textSecondary, letterSpacing: 0.5)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: _textSecondary,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
     );
   }
@@ -275,7 +357,6 @@ class _MenuItem extends StatelessWidget {
     required this.label,
     required this.iconColor,
     this.textColor,
-    this.badge,
     this.showArrow = true,
     this.onTap,
   });
@@ -295,7 +376,11 @@ class _MenuItem extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: ListTile(
@@ -308,22 +393,40 @@ class _MenuItem extends StatelessWidget {
           ),
           child: Icon(icon, color: iconColor, size: 20),
         ),
-        title: Text(label,
-            style: TextStyle(
-                color: textColor ?? _textPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: textColor ?? _textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (badge != null)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: _primary, borderRadius: BorderRadius.circular(20)),
-                child: Text(badge!,
-                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                decoration: BoxDecoration(
+                  color: _primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             if (showArrow) ...[
               const SizedBox(width: 6),
-              const Icon(Icons.arrow_forward_ios, size: 13, color: _textSecondary),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 13,
+                color: _textSecondary,
+              ),
             ],
           ],
         ),

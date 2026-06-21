@@ -7,6 +7,7 @@ import 'package:reloved/services/auth_service.dart';
 import 'package:reloved/services/product_service.dart';
 import 'package:reloved/services/order_service.dart';
 import 'package:reloved/services/supabase_service.dart';
+import 'package:reloved/services/notification_service.dart';
 import 'package:reloved/utils/whatsapp_helper.dart';
 import 'package:reloved/screens/map_picker_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -143,6 +144,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await OrderService().updateOrderStatus(widget.order.id, 'Selesai');
+              
+              // Notify Seller that the buyer has received the item
+              NotificationService().sendNotification(
+                userId: widget.order.sellerId,
+                type: 'order',
+                title: 'Pesanan Selesai',
+                body: 'Pembeli telah menerima produk "${widget.order.productName}" Anda. Transaksi selesai!',
+                data: {'orderId': widget.order.id},
+              );
+
+              // Notify Buyer that their order is completed
+              NotificationService().sendNotification(
+                userId: widget.order.buyerId,
+                type: 'order',
+                title: 'Pesanan Selesai',
+                body: 'Terima kasih! Pesanan Anda untuk produk "${widget.order.productName}" telah selesai.',
+                data: {'orderId': widget.order.id},
+              );
+
               setState(() => _currentStatus = 'Selesai');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +202,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await OrderService().updateOrderStatus(widget.order.id, 'Diproses');
+              
+              // Notify Buyer that their order has been confirmed/processed by the seller
+              NotificationService().sendNotification(
+                userId: widget.order.buyerId,
+                type: 'order',
+                title: 'Pesanan Dikonfirmasi',
+                body: 'Penjual telah mengonfirmasi pesanan Anda untuk produk "${widget.order.productName}". Sekarang pesanan sedang diproses/dikemas.',
+                data: {'orderId': widget.order.id},
+              );
+
               setState(() => _currentStatus = 'Diproses');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -221,6 +251,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await OrderService().updateOrderStatus(widget.order.id, 'Dikirim');
+              
+              // Notify Buyer that their order has been shipped
+              NotificationService().sendNotification(
+                userId: widget.order.buyerId,
+                type: 'order',
+                title: 'Pesanan Dikirim',
+                body: 'Kabar baik! Produk "${widget.order.productName}" telah dikirim oleh penjual.',
+                data: {'orderId': widget.order.id},
+              );
+
               setState(() => _currentStatus = 'Dikirim');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -273,6 +313,27 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (confirm == true) {
       await OrderService().updateOrderStatus(widget.order.id, 'Batal');
       
+      final isPembelian = widget.type == 'pembelian';
+      if (isPembelian) {
+        // Buyer cancelled, notify Seller
+        NotificationService().sendNotification(
+          userId: widget.order.sellerId,
+          type: 'order',
+          title: 'Pesanan Dibatalkan',
+          body: 'Pembeli telah membatalkan pesanan untuk produk "${widget.order.productName}".',
+          data: {'orderId': widget.order.id},
+        );
+      } else {
+        // Seller rejected/cancelled, notify Buyer
+        NotificationService().sendNotification(
+          userId: widget.order.buyerId,
+          type: 'order',
+          title: 'Pesanan Ditolak/Dibatalkan',
+          body: 'Maaf, penjual telah membatalkan pesanan Anda untuk produk "${widget.order.productName}".',
+          data: {'orderId': widget.order.id},
+        );
+      }
+
       // Restore stock in Supabase
       try {
         final pService = ProductService();
@@ -390,6 +451,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       meetupStatus: whoProposed,
     );
 
+    // Notify the other party about the proposed COD schedule
+    final isPembelian = widget.type == 'pembelian';
+    NotificationService().sendNotification(
+      userId: isPembelian ? _order.sellerId : _order.buyerId,
+      type: 'order',
+      title: 'Pengajuan Jadwal COD Baru',
+      body: 'Partner COD Anda telah mengajukan waktu/lokasi pertemuan baru untuk produk "${_order.productName}". Silakan cek detail pesanan.',
+      data: {'orderId': _order.id},
+    );
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -404,6 +475,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     await OrderService().updateMeetupStatus(_order.id, 'Agreed');
     await OrderService().updateOrderStatus(_order.id, 'Dikirim');
     
+    // Notify both buyer and seller about COD Agreement
+    NotificationService().sendNotification(
+      userId: _order.buyerId,
+      type: 'order',
+      title: 'Jadwal COD Disetujui',
+      body: 'Kabar baik! Jadwal pertemuan COD untuk produk "${_order.productName}" telah disetujui. Status pesanan: Siap Ketemuan.',
+      data: {'orderId': _order.id},
+    );
+
+    NotificationService().sendNotification(
+      userId: _order.sellerId,
+      type: 'order',
+      title: 'Jadwal COD Disetujui',
+      body: 'Kabar baik! Jadwal pertemuan COD untuk produk "${_order.productName}" telah disetujui. Status pesanan: Siap Ketemuan.',
+      data: {'orderId': _order.id},
+    );
+
     setState(() {
       _currentStatus = 'Dikirim';
     });
@@ -420,6 +508,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _tolakJadwalCod() async {
     await OrderService().updateMeetupStatus(_order.id, 'None');
+
+    // Notify the other party about COD Rejection
+    final isPembelian = widget.type == 'pembelian';
+    NotificationService().sendNotification(
+      userId: isPembelian ? _order.sellerId : _order.buyerId,
+      type: 'order',
+      title: 'Jadwal COD Ditolak',
+      body: 'Partner COD Anda telah menolak pengajuan jadwal pertemuan untuk produk "${_order.productName}". Silakan ajukan jadwal baru.',
+      data: {'orderId': _order.id},
+    );
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

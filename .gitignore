@@ -55,3 +55,7 @@ service-account.json
 
 # Crash dumps
 *.stackdump
+
+# Kotlin compiler daemon folder
+.kotlin/
+**/android/.kotlin/

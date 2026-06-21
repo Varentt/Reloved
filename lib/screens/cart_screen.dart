@@ -62,7 +62,8 @@ class _CartScreenState extends State<CartScreen> {
   void _handleCheckout(BuildContext context) {
     final selected = <Map<String, dynamic>>[];
     for (final item in _cart.items) {
-      if (item['selected'] == true) selected.add(Map<String, dynamic>.from(item));
+      if (item['selected'] == true)
+        selected.add(Map<String, dynamic>.from(item));
     }
     final sellers = <String>{};
     for (final item in selected) {
@@ -73,21 +74,31 @@ class _CartScreenState extends State<CartScreen> {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Produk Beda Toko',
-              style: TextStyle(fontWeight: FontWeight.w800)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Produk Beda Toko',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
           content: const Text(
-              'Kamu hanya bisa checkout produk dari 1 toko dalam 1 transaksi. '
-              'Pilih produk dari toko yang sama ya!'),
+            'Kamu hanya bisa checkout produk dari 1 toko dalam 1 transaksi. '
+            'Pilih produk dari toko yang sama ya!',
+          ),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Mengerti',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -97,9 +108,7 @@ class _CartScreenState extends State<CartScreen> {
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => CheckoutScreen(products: selected),
-      ),
+      MaterialPageRoute(builder: (_) => CheckoutScreen(products: selected)),
     );
   }
 
@@ -124,7 +133,10 @@ class _CartScreenState extends State<CartScreen> {
         title: Text(
           'Keranjang${items.isNotEmpty ? ' (${items.length})' : ''}',
           style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -136,7 +148,9 @@ class _CartScreenState extends State<CartScreen> {
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Checkbox(
@@ -144,18 +158,26 @@ class _CartScreenState extends State<CartScreen> {
                         onChanged: _cart.toggleAll,
                         activeColor: _primary,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
                       ),
-                      const Text('Pilih Semua',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: _textPrimary)),
+                      const Text(
+                        'Pilih Semua',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: _textPrimary,
+                        ),
+                      ),
                       const Spacer(),
                       if (_cart.selectedCount > 0)
-                        Text('${_cart.selectedCount} item dipilih',
-                            style: const TextStyle(
-                                fontSize: 12, color: _textSecondary)),
+                        Text(
+                          '${_cart.selectedCount} item dipilih',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: _textSecondary,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -166,8 +188,7 @@ class _CartScreenState extends State<CartScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(14),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final item = items[i];
                       return Container(
@@ -187,11 +208,11 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             Checkbox(
                               value: item['selected'] as bool,
-                              onChanged: (val) =>
-                                  _cart.toggleSelected(i, val),
+                              onChanged: (val) => _cart.toggleSelected(i, val),
                               activeColor: _primary,
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4)),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
                             ),
                             Container(
                               width: 72,
@@ -203,17 +224,25 @@ class _CartScreenState extends State<CartScreen> {
                               child: Stack(
                                 children: [
                                   Positioned.fill(
-                                    child: item['imageUrl'] != null && (item['imageUrl'] as String).isNotEmpty
+                                    child:
+                                        item['imageUrl'] != null &&
+                                            (item['imageUrl'] as String)
+                                                .isNotEmpty
                                         ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
                                             child: Image.network(
                                               item['imageUrl'] as String,
                                               fit: BoxFit.cover,
                                             ),
                                           )
                                         : const Center(
-                                            child: Icon(Icons.image_outlined,
-                                                color: _textSecondary, size: 28),
+                                            child: Icon(
+                                              Icons.image_outlined,
+                                              color: _textSecondary,
+                                              size: 28,
+                                            ),
                                           ),
                                   ),
                                   Positioned(
@@ -221,18 +250,23 @@ class _CartScreenState extends State<CartScreen> {
                                     left: 4,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 2),
+                                        horizontal: 5,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: _badgeColor(
-                                            item['badge'] as String),
-                                        borderRadius:
-                                            BorderRadius.circular(4),
+                                          item['badge'] as String,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: Text(item['badge'] as String,
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 7,
-                                              fontWeight: FontWeight.w800)),
+                                      child: Text(
+                                        item['badge'] as String,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 7,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -241,63 +275,87 @@ class _CartScreenState extends State<CartScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item['name'] as String,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 13,
-                                            color: _textPrimary)),
+                                    Text(
+                                      item['name'] as String,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        color: _textPrimary,
+                                      ),
+                                    ),
                                     const SizedBox(height: 2),
-                                    Text(item['seller'] as String,
-                                        style: const TextStyle(
-                                            fontSize: 11,
-                                            color: _textSecondary)),
+                                    Text(
+                                      item['seller'] as String,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: _textSecondary,
+                                      ),
+                                    ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
                                         Text(
-                                            _formatPrice(
-                                                item['price'] as int),
-                                            style: const TextStyle(
-                                                color: _primary,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 14)),
+                                          _formatPrice(item['price'] as int),
+                                          style: const TextStyle(
+                                            color: _primary,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 14,
+                                          ),
+                                        ),
                                         const Spacer(),
                                         _QtyButton(
                                           icon: Icons.remove,
                                           onTap: () => _cart.updateQty(
-                                              i,
-                                              (item['qty'] as int) - 1),
+                                            i,
+                                            (item['qty'] as int) - 1,
+                                          ),
                                         ),
                                         Padding(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 10),
-                                          child: Text('${item['qty']}',
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 14,
-                                                  color: _textPrimary)),
+                                            horizontal: 10,
+                                          ),
+                                          child: Text(
+                                            '${item['qty']}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 14,
+                                              color: _textPrimary,
+                                            ),
+                                          ),
                                         ),
                                         _QtyButton(
                                           icon: Icons.add,
                                           onTap: () {
-                                            final currentQty = item['qty'] as int;
-                                            final stock = item['stock'] as int? ?? 1;
+                                            final currentQty =
+                                                item['qty'] as int;
+                                            final stock =
+                                                item['stock'] as int? ?? 1;
                                             if (currentQty < stock) {
-                                              _cart.updateQty(i, currentQty + 1);
+                                              _cart.updateQty(
+                                                i,
+                                                currentQty + 1,
+                                              );
                                             } else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
                                                 SnackBar(
-                                                  content: Text('Stok terbatas! Pembelian maksimal $stock item.'),
-                                                  behavior: SnackBarBehavior.floating,
-                                                  duration: const Duration(seconds: 1),
+                                                  content: Text(
+                                                    'Stok terbatas! Pembelian maksimal $stock item.',
+                                                  ),
+                                                  behavior:
+                                                      SnackBarBehavior.floating,
+                                                  duration: const Duration(
+                                                    seconds: 1,
+                                                  ),
                                                 ),
                                               );
                                             }
@@ -305,7 +363,11 @@ class _CartScreenState extends State<CartScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         IconButton(
-                                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.redAccent,
+                                            size: 20,
+                                          ),
                                           onPressed: () => _removeItem(i),
                                           constraints: const BoxConstraints(),
                                           padding: EdgeInsets.zero,
@@ -326,8 +388,7 @@ class _CartScreenState extends State<CartScreen> {
 
                 // Bottom bar
                 Container(
-                  padding:
-                      const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -344,36 +405,47 @@ class _CartScreenState extends State<CartScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Total Pembayaran',
-                              style: TextStyle(
-                                  fontSize: 11, color: _textSecondary)),
-                          Text(_formatPrice(_cart.totalPrice),
-                              style: const TextStyle(
-                                  color: _primary,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 18)),
+                          const Text(
+                            'Total Pembayaran',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _textSecondary,
+                            ),
+                          ),
+                          Text(
+                            _formatPrice(_cart.totalPrice),
+                            style: const TextStyle(
+                              color: _primary,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _cart.selectedCount > 0 ? () => _handleCheckout(context) : null,
+                          onPressed: _cart.selectedCount > 0
+                              ? () => _handleCheckout(context)
+                              : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _primary,
                             disabledBackgroundColor: _accent,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           child: Text(
                             _cart.selectedCount > 0
                                 ? 'Beli (${_cart.selectedCount})'
                                 : 'Pilih Item',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 15),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
                           ),
                         ),
                       ),
@@ -410,7 +482,7 @@ class _QtyButton extends StatelessWidget {
 class _EmptyCart extends StatelessWidget {
   const _EmptyCart();
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
@@ -422,19 +494,27 @@ class _EmptyCart extends StatelessWidget {
               color: _accent.withOpacity(0.4),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.shopping_cart_outlined,
-                size: 48, color: _primary),
+            child: const Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: _primary,
+            ),
           ),
           const SizedBox(height: 16),
-          const Text('Keranjang masih kosong',
-              style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: _textPrimary)),
+          const Text(
+            'Keranjang masih kosong',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: _textPrimary,
+            ),
+          ),
           const SizedBox(height: 6),
-          const Text('Tambah produk yang kamu suka\nke keranjang dulu ya!',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: _textSecondary, fontSize: 13)),
+          const Text(
+            'Tambah produk yang kamu suka\nke keranjang dulu ya!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: _textSecondary, fontSize: 13),
+          ),
         ],
       ),
     );

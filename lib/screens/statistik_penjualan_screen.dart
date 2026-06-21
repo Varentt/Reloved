@@ -16,14 +16,19 @@ class StatistikPenjualanScreen extends StatelessWidget {
   const StatistikPenjualanScreen({super.key});
 
   String _formatRupiah(int amount) {
-    return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(amount);
+    return NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp',
+      decimalDigits: 0,
+    ).format(amount);
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.user;
-    if (user == null) return const Scaffold(body: Center(child: Text('Login dulu')));
+    if (user == null)
+      return const Scaffold(body: Center(child: Text('Login dulu')));
 
     final orderService = OrderService();
 
@@ -45,17 +50,29 @@ class StatistikPenjualanScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Statistik Penjualan',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+        title: const Text(
+          'Statistik Penjualan',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
       ),
       body: StreamBuilder<List<OrderModel>>(
         stream: orderService.getSellerOrders(user.uid),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return const Center(child: CircularProgressIndicator());
+
           final allOrders = snapshot.data ?? [];
-          final completedOrders = allOrders.where((o) => o.status == 'Selesai').toList();
-          final totalIncome = completedOrders.fold(0, (sum, o) => sum + o.price);
+          final completedOrders = allOrders
+              .where((o) => o.status == 'Selesai')
+              .toList();
+          final totalIncome = completedOrders.fold(
+            0,
+            (sum, o) => sum + o.price,
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -86,15 +103,23 @@ class StatistikPenjualanScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                const Text('Daftar Produk Terjual',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: _textPrimary)),
+                const Text(
+                  'Daftar Produk Terjual',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: _textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 12),
-                
+
                 if (completedOrders.isEmpty)
-                  const Center(child: Padding(
-                    padding: EdgeInsets.all(40.0),
-                    child: Text('Belum ada produk yang terjual'),
-                  )),
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: Text('Belum ada produk yang terjual'),
+                    ),
+                  ),
 
                 ...completedOrders.map((item) {
                   return Container(
@@ -104,31 +129,60 @@ class StatistikPenjualanScreen extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
                     ),
                     child: Row(
                       children: [
                         Container(
-                          width: 44, height: 44,
-                          decoration: BoxDecoration(color: _accent.withOpacity(0.5), borderRadius: BorderRadius.circular(10)),
-                          child: const Icon(Icons.shopping_bag_outlined, color: _primary, size: 22),
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: _accent.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.shopping_bag_outlined,
+                            color: _primary,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.productName,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _textPrimary)),
+                              Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: _textPrimary,
+                                ),
+                              ),
                               const SizedBox(height: 2),
-                              Text('${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}',
-                                  style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                              Text(
+                                '${item.createdAt.day}/${item.createdAt.month}/${item.createdAt.year}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: _textSecondary,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        Text(_formatRupiah(item.price),
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _primary)),
+                        Text(
+                          _formatRupiah(item.price),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: _primary,
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -148,7 +202,6 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
-    this.fullWidth = false,
   });
   final String label;
   final String value;
@@ -165,7 +218,11 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -180,10 +237,19 @@ class _StatCard extends StatelessWidget {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 10),
-          Text(value,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: _textPrimary)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              color: _textPrimary,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: _textSecondary)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: _textSecondary),
+          ),
         ],
       ),
     );
