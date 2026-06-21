@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:reloved/models/product_model.dart';
 import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/product_detail_screen.dart';
@@ -7,6 +8,8 @@ import 'package:reloved/screens/product_category_screen.dart';
 import 'package:reloved/screens/notification_screen.dart';
 import 'package:reloved/screens/cart_screen.dart';
 import 'package:reloved/screens/favorite_screen.dart';
+import 'package:reloved/providers/auth_provider.dart';
+import 'package:reloved/services/notification_service.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -35,6 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.user;
+
     return Scaffold(
       backgroundColor: _surface,
       body: SafeArea(
@@ -82,14 +88,54 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       }),
                       const SizedBox(width: 8),
-                      _topIconBtn(Icons.notifications_none_outlined, () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const NotificationScreen(),
-                          ),
-                        );
-                      }),
+                      StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: user == null
+                            ? const Stream.empty()
+                            : NotificationService().streamNotifications(user.uid),
+                        builder: (context, snapshot) {
+                          final unreadCount = snapshot.data
+                              ?.where((n) => (n['is_read'] as bool? ?? false) == false)
+                              .length ?? 0;
+
+                          return Stack(
+                            children: [
+                              _topIconBtn(Icons.notifications_none_outlined, () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationScreen(),
+                                  ),
+                                );
+                              }),
+                              if (unreadCount > 0)
+                                Positioned(
+                                  right: 2,
+                                  top: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 14,
+                                      minHeight: 14,
+                                    ),
+                                    child: Text(
+                                      '$unreadCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                       const SizedBox(width: 8),
                       _topIconBtn(Icons.shopping_cart_outlined, () {
                         Navigator.push(

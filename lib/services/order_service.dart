@@ -102,4 +102,20 @@ class OrderService {
           return list;
         });
   }
+
+  // 8. Ambil Satu Pesanan Berdasarkan ID
+  Future<OrderModel?> getOrderById(String orderId) async {
+    try {
+      final res = await SupabaseService.client
+          .from('orders')
+          .select()
+          .eq('id', orderId)
+          .maybeSingle();
+      if (res == null) return null;
+      return OrderModel.fromMap(res, res['id']?.toString() ?? '');
+    } catch (e) {
+      debugPrint("Error getOrderById: $e");
+      return null;
+    }
+  }
 }
