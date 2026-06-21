@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     decoration: InputDecoration(
-                      hintText: 'Cari barang second, reject, expired...',
+                      hintText: 'Cari elektronik, pakaian, peralatan...',
                       hintStyle: const TextStyle(
                         fontSize: 13,
                         color: _textSecondary,
@@ -374,15 +374,15 @@ class _BannerSliderState extends State<_BannerSlider> {
       'colors': [Color(0xFF2e4a73), Color(0xFF3B5B8A)],
     },
     {
-      'title': 'Produk Reject\nHarga Super Miring',
-      'sub': 'Cacat minim, fungsi tetap terjamin',
-      'icon': Icons.inventory_2_outlined,
+      'title': 'Elektronik & Gadget\nSecond Berkualitas',
+      'sub': 'Kondisi mulus, fungsi terjamin 100%',
+      'icon': Icons.devices,
       'colors': [Color(0xFF3B5B8A), Color(0xFF4a6fa0)],
     },
     {
-      'title': 'Makanan Hampir\nExpired? Diskon Gede!',
-      'sub': 'Bantu kurangi limbah makanan kita',
-      'icon': Icons.fastfood_outlined,
+      'title': 'Pakaian & Fashion\nPreloved Kece',
+      'sub': 'Tampil stylish dengan harga bersahabat',
+      'icon': Icons.checkroom,
       'colors': [Color(0xFF2e4a73), Color(0xFF4a6fa0)],
     },
   ];
@@ -546,9 +546,9 @@ class _ProductCard extends StatelessWidget {
 
   Color get _badgeColor {
     final cat = product.category.toLowerCase();
-    if (cat.contains('second')) return Colors.blue;
-    if (cat.contains('reject')) return Colors.orange;
-    if (cat.contains('expired')) return Colors.red;
+    if (cat.contains('elektronik')) return Colors.blue;
+    if (cat.contains('pakaian')) return Colors.purple;
+    if (cat.contains('peralatan')) return Colors.orange;
     return _primary;
   }
 

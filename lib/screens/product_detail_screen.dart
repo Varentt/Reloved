@@ -66,9 +66,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Color get _badgeColor {
     final cat = widget.product.category.toLowerCase();
-    if (cat.contains('second')) return Colors.blue;
-    if (cat.contains('reject')) return Colors.orange;
-    if (cat.contains('expired')) return Colors.red;
+    if (cat.contains('elektronik')) return Colors.blue;
+    if (cat.contains('pakaian')) return Colors.purple;
+    if (cat.contains('peralatan')) return Colors.orange;
     return _primary;
   }
 
