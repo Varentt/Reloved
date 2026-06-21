@@ -56,6 +56,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               elevation: 0,
               title: const Text('Admin Panel', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
               iconTheme: const IconThemeData(color: Colors.white),
+              actions: [
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: NotificationService().streamNotifications('admin'),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data
+                        ?.where((n) => (n['is_read'] as bool? ?? false) == false)
+                        .length ?? 0;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                          onPressed: () => setState(() => _selectedIndex = 5),
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 14,
+                                minHeight: 14,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
             drawer: Drawer(
               child: _SideNav(
@@ -156,6 +201,34 @@ class _SideNav extends StatelessWidget {
                                   color: active ? Colors.white : _accent.withOpacity(0.7),
                                   fontSize: 13,
                                   fontWeight: active ? FontWeight.w700 : FontWeight.w500)),
+                          if (items[i]['label'] == 'Notifikasi') ...[
+                            const Spacer(),
+                            StreamBuilder<List<Map<String, dynamic>>>(
+                              stream: NotificationService().streamNotifications('admin'),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) return const SizedBox.shrink();
+                                final unreadCount = snapshot.data!
+                                    .where((n) => (n['is_read'] as bool? ?? false) == false)
+                                    .length;
+                                if (unreadCount == 0) return const SizedBox.shrink();
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
                         ],
                       ),
                     ),
