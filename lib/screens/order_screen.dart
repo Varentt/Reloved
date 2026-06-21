@@ -140,108 +140,146 @@ class _OrderList extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _surface,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrderDetailScreen(order: o, type: type),
+                        ),
+                      );
+                    },
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: Column(
                       children: [
-                        Text('INV/${o.createdAt.year}/${o.createdAt.month}/${o.id.substring(0, 5).toUpperCase()}',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _textSecondary)),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor.withOpacity(0.3)),
+                            color: _surface,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                           ),
-                          child: Text(o.status,
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        FutureBuilder<ProductModel?>(
-                          future: productService.getProductById(o.productId),
-                          builder: (context, snapshot) {
-                            final prod = snapshot.data;
-                            return Container(
-                              width: 60, height: 60,
-                              decoration: BoxDecoration(color: _accent.withOpacity(0.4), borderRadius: BorderRadius.circular(10)),
-                              child: prod != null && prod.imageUrl.isNotEmpty
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(prod.imageUrl, fit: BoxFit.cover),
-                                    )
-                                  : const Icon(Icons.image_outlined, color: _textSecondary),
-                            );
-                          }
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(o.productName,
-                                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text(_formatRupiah(o.price),
-                                      style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 14)),
-                                  const SizedBox(width: 8),
-                                  Text('x${o.qty}',
-                                      style: const TextStyle(color: _textSecondary, fontWeight: FontWeight.w600, fontSize: 12)),
-                                ],
+                              Text('INV/${o.createdAt.year}/${o.createdAt.month}/${o.id.substring(0, 5).toUpperCase()}',
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _textSecondary)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: statusColor.withOpacity(0.3)),
+                                ),
+                                child: Text(o.status,
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor)),
                               ),
                             ],
                           ),
                         ),
-                        Text('${o.createdAt.day}/${o.createdAt.month}',
-                            style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              FutureBuilder<ProductModel?>(
+                                future: productService.getProductById(o.productId),
+                                builder: (context, snapshot) {
+                                  final prod = snapshot.data;
+                                  return Container(
+                                    width: 60, height: 60,
+                                    decoration: BoxDecoration(color: _accent.withOpacity(0.4), borderRadius: BorderRadius.circular(10)),
+                                    child: prod != null && prod.imageUrl.isNotEmpty
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(10),
+                                            child: Image.network(prod.imageUrl, fit: BoxFit.cover),
+                                          )
+                                        : const Icon(Icons.image_outlined, color: _textSecondary),
+                                  );
+                                }
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(o.productName,
+                                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(_formatRupiah(o.price),
+                                            style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 14)),
+                                        const SizedBox(width: 8),
+                                        Text('x${o.qty}',
+                                            style: const TextStyle(color: _textSecondary, fontWeight: FontWeight.w600, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text('${o.createdAt.day}/${o.createdAt.month}',
+                                  style: const TextStyle(fontSize: 11, color: _textSecondary)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   const Divider(height: 1, color: _surface),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         if (type == 'pembelian' && o.status == 'Pending')
                           ElevatedButton(
                             onPressed: () => _cancelOrder(context, orderService, productService, o),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                            child: const Text('Batalkan Pesanan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Batalkan', style: TextStyle(fontSize: 12)),
                           ),
                         if (type == 'pembelian' && o.status == 'Dikirim')
                           ElevatedButton(
                             onPressed: () => _updateStatus(context, orderService, o.id, 'Selesai'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                            child: const Text('Pesanan Diterima'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Pesanan Diterima', style: TextStyle(fontSize: 12)),
                           ),
                         if (type == 'penjualan' && o.status == 'Pending') ...[
                           OutlinedButton(
                             onPressed: () => _cancelOrder(context, orderService, productService, o),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
-                              side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                              side: const BorderSide(color: Colors.redAccent, width: 1.2),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            child: const Text('Batalkan'),
+                            child: const Text('Batalkan', style: TextStyle(fontSize: 12)),
                           ),
-                          const SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () => _updateStatus(context, orderService, o.id, 'Diproses'),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                            child: const Text('Konfirmasi Pesanan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Konfirmasi', style: TextStyle(fontSize: 12)),
                           ),
                         ],
                         if (type == 'penjualan' && o.status == 'Diproses') ...[
@@ -249,18 +287,25 @@ class _OrderList extends StatelessWidget {
                             onPressed: () => _cancelOrder(context, orderService, productService, o),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
-                              side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                              side: const BorderSide(color: Colors.redAccent, width: 1.2),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            child: const Text('Batalkan'),
+                            child: const Text('Batalkan', style: TextStyle(fontSize: 12)),
                           ),
-                          const SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () => _updateStatus(context, orderService, o.id, 'Dikirim'),
-                            style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.white),
-                            child: const Text('Kirim Barang'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('Kirim Barang', style: TextStyle(fontSize: 12)),
                           ),
                         ],
-                        const SizedBox(width: 8),
                         OutlinedButton.icon(
                           onPressed: () async {
                             showDialog(
@@ -305,14 +350,16 @@ class _OrderList extends StatelessWidget {
                               }
                             }
                           },
-                          icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                          label: const Text('Chat'),
+                          icon: const Icon(Icons.chat_bubble_outline, size: 14),
+                          label: const Text('Chat', style: TextStyle(fontSize: 12)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _primary,
                             side: const BorderSide(color: _primary, width: 1.2),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         OutlinedButton(
                           onPressed: () {
                             Navigator.push(
@@ -322,7 +369,12 @@ class _OrderList extends StatelessWidget {
                               ),
                             );
                           },
-                          child: const Text('Detail'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text('Detail', style: TextStyle(fontSize: 12)),
                         ),
                       ],
                     ),
