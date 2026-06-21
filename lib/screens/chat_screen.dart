@@ -37,6 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _chatService = ChatService();
   StreamSubscription? _messageSubscription;
   UserModel? _otherUser;
+  final List<MessageModel> _localMessages = [];
 
   @override
   void initState() {
@@ -79,19 +80,36 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
 
     _messageController.clear();
-    await _chatService.sendMessage(
-      roomId: widget.roomId,
+
+    // Create optimistic local message
+    final tempMsg = MessageModel(
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
       senderId: myId,
       text: text,
+      createdAt: DateTime.now(),
     );
 
-    // Scroll to bottom
+    setState(() {
+      _localMessages.insert(0, tempMsg);
+    });
+
+    // Scroll to bottom immediately
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0.0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+
+    try {
+      await _chatService.sendMessage(
+        roomId: widget.roomId,
+        senderId: myId,
+        text: text,
+      );
+    } catch (e) {
+      debugPrint("Gagal kirim pesan: $e");
     }
   }
 
@@ -196,7 +214,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: CircularProgressIndicator(color: _primary));
                 }
 
-                final messages = snapshot.data ?? [];
+                final dbMessages = snapshot.data ?? [];
+                _localMessages.removeWhere((local) => dbMessages.any((db) =>
+                    db.senderId == local.senderId && db.text == local.text));
+                final messages = [..._localMessages, ...dbMessages];
 
                 if (messages.isEmpty) {
                   return Center(

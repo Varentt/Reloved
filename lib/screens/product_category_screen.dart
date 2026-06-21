@@ -30,6 +30,19 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
   String _expFilter = 'Semua';
   final _productService = ProductService();
 
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Elektronik':
+        return Icons.devices;
+      case 'Pakaian':
+        return Icons.checkroom;
+      case 'Peralatan':
+        return Icons.build;
+      default:
+        return Icons.category;
+    }
+  }
+
   String _formatRupiah(int price) {
     return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0).format(price);
   }
@@ -122,7 +135,7 @@ class _ProductCategoryScreenState extends State<ProductCategoryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.inventory_2_outlined, size: 60, color: _accent),
+                        Icon(_getCategoryIcon(widget.categoryTitle), size: 60, color: _accent),
                         const SizedBox(height: 12),
                         Text('Tidak ada produk di kategori ini', style: TextStyle(color: _textSecondary)),
                       ],

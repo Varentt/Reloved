@@ -197,17 +197,19 @@ class StatistikPenjualanScreen extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
   final String label;
   final String value;
   final IconData icon;
   final Color color;
   final bool fullWidth;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    this.fullWidth = false,
+  });
 
   @override
   Widget build(BuildContext context) {

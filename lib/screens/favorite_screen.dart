@@ -116,13 +116,18 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             itemBuilder: (context, i) {
                               final p = favorites[i];
                               return GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ProductDetailScreen(product: p),
-                                  ),
-                                ),
+                                onTap: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ProductDetailScreen(product: p),
+                                    ),
+                                  );
+                                  if (mounted) {
+                                    setState(() {});
+                                  }
+                                },
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -135,124 +140,149 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                       ),
                                     ],
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 90,
-                                        height: 90,
-                                        decoration: BoxDecoration(
-                                          color: _accent.withOpacity(0.4),
-                                          borderRadius:
-                                              const BorderRadius.horizontal(
-                                                left: Radius.circular(14),
-                                              ),
-                                        ),
-                                        child: Stack(
-                                          children: [
-                                            Center(
-                                              child: p.imageUrl.isNotEmpty
-                                                  ? Image.network(
-                                                      p.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : const Icon(
-                                                      Icons.image_outlined,
-                                                      color: _textSecondary,
-                                                      size: 30,
-                                                    ),
-                                            ),
-                                            Positioned(
-                                              top: 6,
-                                              left: 6,
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: _primary,
-                                                  borderRadius:
-                                                      BorderRadius.circular(5),
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        Container(
+                                          width: 90,
+                                          decoration: BoxDecoration(
+                                            color: _accent.withOpacity(0.4),
+                                            borderRadius:
+                                                const BorderRadius.horizontal(
+                                                  left: Radius.circular(14),
                                                 ),
-                                                child: Text(
-                                                  p.category
-                                                      .split(' ')
-                                                      .last
-                                                      .toUpperCase(),
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 8,
-                                                    fontWeight: FontWeight.w800,
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.horizontal(
+                                                  left: Radius.circular(14),
+                                                ),
+                                            child: Stack(
+                                              children: [
+                                                Positioned.fill(
+                                                  child: p.imageUrl.isNotEmpty
+                                                      ? Image.network(
+                                                          p.imageUrl,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context, error, stackTrace) {
+                                                            return const Icon(
+                                                              Icons.image_outlined,
+                                                              color: _textSecondary,
+                                                              size: 30,
+                                                            );
+                                                          },
+                                                        )
+                                                      : const Icon(
+                                                          Icons.image_outlined,
+                                                          color: _textSecondary,
+                                                          size: 30,
+                                                        ),
+                                                ),
+                                                Positioned(
+                                                  top: 6,
+                                                  left: 6,
+                                                  child: Container(
+                                                    constraints: const BoxConstraints(
+                                                      maxWidth: 78,
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: _primary,
+                                                      borderRadius:
+                                                          BorderRadius.circular(5),
+                                                    ),
+                                                    child: Text(
+                                                      p.category
+                                                          .split(' ')
+                                                          .last
+                                                          .toUpperCase(),
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 8,
+                                                        fontWeight: FontWeight.w800,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 14,
-                                            vertical: 12,
                                           ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                p.name,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 13,
-                                                  color: _textPrimary,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              if (p.normalPrice > 0)
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
                                                 Text(
-                                                  _formatRupiah(p.normalPrice),
+                                                  p.name,
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
                                                   style: const TextStyle(
-                                                    decoration: TextDecoration
-                                                        .lineThrough,
-                                                    color: _textSecondary,
-                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13,
+                                                    color: _textPrimary,
                                                   ),
                                                 ),
-                                              Text(
-                                                _formatRupiah(p.price),
-                                                style: const TextStyle(
-                                                  color: _primary,
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.location_on_outlined,
-                                                    size: 11,
-                                                    color: _textSecondary,
-                                                  ),
-                                                  const SizedBox(width: 2),
+                                                const SizedBox(height: 4),
+                                                if (p.normalPrice > 0)
                                                   Text(
-                                                    p.location,
+                                                    _formatRupiah(p.normalPrice),
                                                     style: const TextStyle(
-                                                      fontSize: 10,
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
                                                       color: _textSecondary,
+                                                      fontSize: 11,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ],
+                                                Text(
+                                                  _formatRupiah(p.price),
+                                                  style: const TextStyle(
+                                                    color: _primary,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.location_on_outlined,
+                                                      size: 11,
+                                                      color: _textSecondary,
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    Expanded(
+                                                      child: Text(
+                                                        p.location,
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          color: _textSecondary,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );

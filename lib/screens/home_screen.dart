@@ -160,39 +160,52 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.recycling,
-                                label: 'Barang\nSecond',
+                                icon: Icons.devices,
+                                label: 'Elektronik',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Barang Second',
-                                  'SECOND',
+                                  'Elektronik',
+                                  'ELEKTRONIK',
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.inventory_2_outlined,
-                                label: 'Produk\nReject',
+                                icon: Icons.checkroom,
+                                label: 'Pakaian',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Produk Reject',
-                                  'REJECT',
+                                  'Pakaian',
+                                  'PAKAIAN',
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: _CategoryCard(
-                                icon: Icons.fastfood_outlined,
-                                label: 'Hampir\nExpired',
+                                icon: Icons.build,
+                                label: 'Peralatan',
                                 color: _primary,
                                 onTap: () => _goCategory(
                                   context,
-                                  'Makanan Hampir Expired',
-                                  'EXPIRED',
+                                  'Peralatan',
+                                  'PERALATAN',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _CategoryCard(
+                                icon: Icons.category,
+                                label: 'Lainnya',
+                                color: _primary,
+                                onTap: () => _goCategory(
+                                  context,
+                                  'Lainnya',
+                                  'LAINNYA',
                                 ),
                               ),
                             ),

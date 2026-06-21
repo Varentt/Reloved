@@ -8,9 +8,9 @@ import 'package:reloved/services/product_service.dart';
 import 'package:reloved/screens/my_products_screen.dart';
 import 'package:reloved/screens/login_screen.dart';
 import 'package:reloved/screens/riwayat_transaksi_screen.dart';
-import 'package:reloved/screens/daftar_alamat_screen.dart';
 import 'package:reloved/screens/statistik_penjualan_screen.dart';
 import 'package:reloved/screens/pengaturan_akun_screen.dart';
+import 'package:reloved/screens/admin_dashboard_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -176,6 +176,20 @@ class ProfileScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            if (user?.role == 'admin') ...[
+              _SectionHeader(label: 'Panel Admin'),
+              _MenuItem(
+                icon: Icons.admin_panel_settings,
+                label: 'Masuk ke Panel Admin',
+                iconColor: Colors.orange,
+                onTap: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // ── Aktivitas Pembeli ──
             _SectionHeader(label: 'Aktivitas Pembeli'),
             _MenuItem(
@@ -187,15 +201,6 @@ class ProfileScreen extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (_) => const RiwayatTransaksiScreen(),
                 ),
-              ),
-            ),
-            _MenuItem(
-              icon: Icons.location_on_outlined,
-              label: 'Daftar Alamat',
-              iconColor: _primary,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DaftarAlamatScreen()),
               ),
             ),
 
@@ -352,14 +357,6 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _MenuItem extends StatelessWidget {
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    this.textColor,
-    this.showArrow = true,
-    this.onTap,
-  });
   final IconData icon;
   final String label;
   final Color iconColor;
@@ -367,6 +364,16 @@ class _MenuItem extends StatelessWidget {
   final String? badge;
   final bool showArrow;
   final VoidCallback? onTap;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+    this.textColor,
+    this.badge,
+    this.showArrow = true,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {

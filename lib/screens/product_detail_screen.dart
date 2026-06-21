@@ -31,6 +31,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _qty = 1;
   UserModel? _seller;
   bool _isLoadingSeller = true;
+  bool? _isFavoriteLocal;
 
   @override
   void initState() {
@@ -129,7 +130,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           : StreamBuilder<bool>(
                               stream: FavoriteService().isProductFavorite(user.uid, p.id),
                               builder: (context, snapshot) {
-                                final isFav = snapshot.data ?? false;
+                                if (_isFavoriteLocal == null && snapshot.hasData) {
+                                  _isFavoriteLocal = snapshot.data;
+                                }
+                                final isFav = _isFavoriteLocal ?? (snapshot.data ?? false);
                                 return IconButton(
                                   icon: Icon(
                                     isFav ? Icons.favorite : Icons.favorite_border,
@@ -137,10 +141,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     size: 18,
                                   ),
                                   onPressed: () async {
-                                    if (isFav) {
-                                      await FavoriteService().removeFavorite(user.uid, p.id);
-                                    } else {
-                                      await FavoriteService().addFavorite(user.uid, p.id);
+                                    setState(() {
+                                      _isFavoriteLocal = !isFav;
+                                    });
+                                    try {
+                                      if (isFav) {
+                                        await FavoriteService().removeFavorite(user.uid, p.id);
+                                      } else {
+                                        await FavoriteService().addFavorite(user.uid, p.id);
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        setState(() {
+                                          _isFavoriteLocal = isFav;
+                                        });
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Gagal mengubah favorit: $e')),
+                                        );
+                                      }
                                     }
                                   },
                                 );
