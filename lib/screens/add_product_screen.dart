@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:reloved/models/product_model.dart';
 import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/product_service.dart';
+import 'package:reloved/services/notification_service.dart';
 import 'package:reloved/screens/map_picker_screen.dart';
 
 
@@ -203,8 +204,46 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
+        
+        List<String> addressParts = [];
+        String street = place.street ?? '';
+        String name = place.name ?? '';
+        
+        if (street.toLowerCase().contains('unnamed road')) {
+          street = '';
+        }
+        if (name.toLowerCase().contains('unnamed road')) {
+          name = '';
+        }
+        
+        if (street.isNotEmpty) {
+          addressParts.add(street);
+        } else if (name.isNotEmpty) {
+          addressParts.add(name);
+        }
+        
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          addressParts.add(place.subAdministrativeArea!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+          addressParts.add(place.postalCode!);
+        }
+        
+        String completeAddress = addressParts.join(', ');
+        
         setState(() {
-          _locationController.text = "${place.locality}, ${place.subAdministrativeArea}";
+          _locationController.text = completeAddress.isNotEmpty 
+              ? completeAddress 
+              : "${place.locality}, ${place.subAdministrativeArea}";
         });
       }
     } catch (e) {
@@ -342,6 +381,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $error')));
     } else {
+      // Send notification to admin
+      NotificationService().sendNotification(
+        userId: 'admin',
+        type: 'upload_product',
+        title: 'Produk Baru Menunggu Verifikasi',
+        body: 'Pengguna "${user.name}" mengunggah produk baru "${product.name}". Silakan lakukan verifikasi.',
+        data: {
+          'productName': product.name,
+          'ownerId': product.ownerId,
+        },
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Produk berhasil diunggah! Menunggu konfirmasi admin.'), backgroundColor: Colors.green));
       Navigator.pop(context);
     }
@@ -508,8 +559,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         const SizedBox(height: 14),
                         _buildLabel('Lokasi Pengambilan'),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Expanded(child: _buildTextField(_locationController, 'Klik tombol di samping ->')),
+                            Expanded(
+                              child: _buildTextField(
+                                _locationController,
+                                'Klik tombol di samping ->',
+                                maxLines: 3,
+                              ),
+                            ),
                             const SizedBox(width: 10),
                             IconButton(
                               onPressed: _selectLocationOption,

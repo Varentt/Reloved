@@ -441,7 +441,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
                         // Lokasi
                         _buildLabel('Lokasi'),
-                        _buildTextField(_locationController, 'Contoh: Malang, Jawa Timur'),
+                        _buildTextField(
+                          _locationController,
+                          'Contoh: Malang, Jawa Timur',
+                          maxLines: 3,
+                        ),
 
                         const SizedBox(height: 14),
 

@@ -89,4 +89,17 @@ class OrderService {
       debugPrint("Error update meetup status: $e");
     }
   }
+
+  // 7. Ambil Semua Transaksi Sukses (Selesai) untuk Admin
+  Stream<List<OrderModel>> get allSuccessfulOrders {
+    return SupabaseService.client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('status', 'Selesai')
+        .map((maps) {
+          final list = maps.map((map) => OrderModel.fromMap(map, map['id']?.toString() ?? '')).toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
+  }
 }

@@ -103,16 +103,38 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         // Susun alamat yang rapi
-        String street = place.street ?? '';
-        String subLocality = place.subLocality ?? '';
-        String locality = place.locality ?? '';
-        String subAdministrativeArea = place.subAdministrativeArea ?? '';
-        
         List<String> parts = [];
-        if (street.isNotEmpty) parts.add(street);
-        if (subLocality.isNotEmpty) parts.add(subLocality);
-        if (locality.isNotEmpty) parts.add(locality);
-        if (subAdministrativeArea.isNotEmpty) parts.add(subAdministrativeArea);
+        String street = place.street ?? '';
+        String name = place.name ?? '';
+        
+        if (street.toLowerCase().contains('unnamed road')) {
+          street = '';
+        }
+        if (name.toLowerCase().contains('unnamed road')) {
+          name = '';
+        }
+        
+        if (street.isNotEmpty) {
+          parts.add(street);
+        } else if (name.isNotEmpty) {
+          parts.add(name);
+        }
+        
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          parts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          parts.add(place.locality!);
+        }
+        if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          parts.add(place.subAdministrativeArea!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          parts.add(place.administrativeArea!);
+        }
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+          parts.add(place.postalCode!);
+        }
 
         setState(() {
           _address = parts.join(', ');

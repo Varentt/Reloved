@@ -94,9 +94,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     'Selesai',
   ];
 
-  List<String> get _statusFlow => widget.type == 'pembelian'
-      ? _statusFlowPembelian
-      : _statusFlowPenjualan;
+  List<String> get _statusFlow {
+    if (widget.type == 'admin') {
+      return _statusFlowPembelian;
+    }
+    return widget.type == 'pembelian'
+        ? _statusFlowPembelian
+        : _statusFlowPenjualan;
+  }
 
   int get _statusIndex {
     switch (_currentStatus) {
@@ -449,6 +454,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isPembelian = widget.type == 'pembelian';
+    final isAdmin = widget.type == 'admin';
     final statusColor = _statusColor(_currentStatus);
     final invNumber = 'INV/${widget.order.createdAt.year}/${widget.order.createdAt.month}/${widget.order.id.substring(0, 5).toUpperCase()}';
     final dateStr = '${widget.order.createdAt.day}/${widget.order.createdAt.month}/${widget.order.createdAt.year}';
@@ -629,22 +635,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   'Titik janjian lokasi & waktu COD belum ditentukan.',
                                   style: TextStyle(fontSize: 12, color: _textSecondary, height: 1.4),
                                 ),
-                                const SizedBox(height: 12),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: _showJadwalkanCodBottomSheet,
-                                    icon: const Icon(Icons.map_outlined, size: 16),
-                                    label: const Text('Jadwalkan Lokasi COD (GPS)'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _primary,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      elevation: 0,
+                                if (!isAdmin) ...[
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _showJadwalkanCodBottomSheet,
+                                      icon: const Icon(Icons.map_outlined, size: 16),
+                                      label: const Text('Jadwalkan Lokasi COD (GPS)'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _primary,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        padding: const EdgeInsets.symmetric(vertical: 10),
+                                        elevation: 0,
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ] else if (_order.meetupStatus == 'ProposedByBuyer' || _order.meetupStatus == 'ProposedBySeller') ...[
                                 const Text(
                                   'Status: Menunggu Persetujuan Jadwal',
@@ -655,7 +663,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 const SizedBox(height: 6),
                                 _buildMeetupDetailRow(Icons.access_time, 'Waktu', _order.meetupTime != null ? _formatDateTime(_order.meetupTime!) : ''),
                                 const SizedBox(height: 12),
-                                if ((widget.type == 'pembelian' && _order.meetupStatus == 'ProposedBySeller') ||
+                                if (isAdmin) ...[
+                                  Text(
+                                    _order.meetupStatus == 'ProposedByBuyer'
+                                        ? 'Menunggu persetujuan dari penjual (diajukan oleh pembeli).'
+                                        : 'Menunggu persetujuan dari pembeli (diajukan oleh penjual).',
+                                    style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: _textSecondary),
+                                  ),
+                                ] else if ((widget.type == 'pembelian' && _order.meetupStatus == 'ProposedBySeller') ||
                                     (widget.type == 'penjualan' && _order.meetupStatus == 'ProposedByBuyer')) ...[
                                   Row(
                                     children: [
@@ -779,10 +794,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                         Text(widget.order.productName,
                                             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: _textPrimary)),
                                         const SizedBox(height: 4),
-                                        Text(
-                                          isPembelian ? 'Penjual: ${seller?.name ?? "Memuat..."}' : 'Pembeli: ${buyer?.name ?? "Memuat..."}',
-                                          style: const TextStyle(fontSize: 12, color: _textSecondary),
-                                        ),
+                                        if (isAdmin) ...[
+                                          Text(
+                                            'Penjual: ${seller?.name ?? "Memuat..."}',
+                                            style: const TextStyle(fontSize: 12, color: _textSecondary),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Pembeli: ${buyer?.name ?? "Memuat..."}',
+                                            style: const TextStyle(fontSize: 12, color: _textSecondary),
+                                          ),
+                                        ] else ...[
+                                          Text(
+                                            isPembelian ? 'Penjual: ${seller?.name ?? "Memuat..."}' : 'Pembeli: ${buyer?.name ?? "Memuat..."}',
+                                            style: const TextStyle(fontSize: 12, color: _textSecondary),
+                                          ),
+                                        ],
                                         const SizedBox(height: 6),
                                         Text(_formatRupiah(widget.order.price),
                                             style: const TextStyle(color: _primary, fontWeight: FontWeight.w800, fontSize: 16)),
@@ -828,10 +855,40 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               const Text('Info Pengiriman',
                                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: _textPrimary)),
                               const SizedBox(height: 12),
-                              if (isPembelian) ...[
+                              if (isAdmin) ...[
+                                _DetailRow(icon: Icons.person_outline, label: 'Nama Penjual', value: seller?.name ?? '-'),
+                                const SizedBox(height: 10),
+                                _DetailRow(
+                                  icon: Icons.phone_outlined,
+                                  label: 'No. Telepon Penjual',
+                                  value: seller?.phone ?? 'Belum ditambahkan',
+                                  onTap: (seller?.phone != null && seller!.phone!.trim().isNotEmpty)
+                                      ? () => _launchWhatsApp(
+                                            seller!.phone!,
+                                            "Halo, saya admin Reloved ingin menanyakan pesanan #${widget.order.id} untuk produk ${product?.name ?? ''}.",
+                                          )
+                                      : null,
+                                ),
+                                const SizedBox(height: 10),
+                                _DetailRow(icon: Icons.person_outline, label: 'Nama Pembeli', value: buyer?.name ?? '-'),
+                                const SizedBox(height: 10),
+                                _DetailRow(
+                                  icon: Icons.phone_outlined,
+                                  label: 'No. Telepon Pembeli',
+                                  value: buyer?.phone ?? 'Belum ditambahkan',
+                                  onTap: (buyer?.phone != null && buyer!.phone!.trim().isNotEmpty)
+                                      ? () => _launchWhatsApp(
+                                            buyer!.phone!,
+                                            "Halo, saya admin Reloved ingin menanyakan pesanan #${widget.order.id} untuk produk ${product?.name ?? ''}.",
+                                          )
+                                      : null,
+                                ),
+                                const SizedBox(height: 10),
+                                _DetailRow(icon: Icons.home_outlined, label: 'Alamat Pengiriman/COD', value: _order.meetupLocation ?? 'Tidak ditentukan'),
+                              ] else if (isPembelian) ...[
                                 _DetailRow(icon: Icons.location_on_outlined, label: 'Lokasi Penjual', value: product?.location ?? 'Tidak ditentukan'),
                                 const SizedBox(height: 10),
-                                _DetailRow(icon: Icons.home_outlined, label: 'Alamat Pengiriman', value: 'Jl. Contoh No. 123, Jember'),
+                                _DetailRow(icon: Icons.home_outlined, label: 'Alamat Pengiriman/COD', value: _order.meetupLocation ?? 'Tidak ditentukan'),
                                 const SizedBox(height: 10),
                                 _DetailRow(
                                   icon: Icons.phone_outlined,
@@ -847,7 +904,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               ] else ...[
                                 _DetailRow(icon: Icons.person_outline, label: 'Nama Pembeli', value: buyer?.name ?? '-'),
                                 const SizedBox(height: 10),
-                                _DetailRow(icon: Icons.home_outlined, label: 'Alamat Tujuan', value: 'Jl. Pembeli No. 456, Jember'),
+                                _DetailRow(icon: Icons.home_outlined, label: 'Alamat Tujuan/COD', value: _order.meetupLocation ?? 'Tidak ditentukan'),
                                 const SizedBox(height: 10),
                                 _DetailRow(
                                   icon: Icons.phone_outlined,
@@ -928,7 +985,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ),
                           ),
 
-                        if (!isPembelian && _currentStatus == 'Pending')
+                        if (!isPembelian && !isAdmin && _currentStatus == 'Pending')
                           Column(
                             children: [
                               SizedBox(
@@ -964,7 +1021,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ],
                           ),
 
-                        if (!isPembelian && _currentStatus == 'Diproses')
+                        if (!isPembelian && !isAdmin && _currentStatus == 'Diproses')
                           Column(
                             children: [
                               SizedBox(

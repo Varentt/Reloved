@@ -176,4 +176,13 @@ class ProductService {
       return e.toString();
     }
   }
+
+  // Stream semua produk untuk admin (semua status)
+  Stream<List<ProductModel>> get allProductsStream {
+    return SupabaseService.client
+        .from('products')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((maps) => maps.map((map) => _fromSupabaseMap(map)).toList());
+  }
 }

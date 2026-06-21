@@ -6,6 +6,9 @@ import 'package:reloved/providers/auth_provider.dart';
 import 'package:reloved/services/order_service.dart';
 import 'package:reloved/services/product_service.dart';
 import 'package:reloved/utils/cart_manager.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:reloved/screens/map_picker_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 const _primaryDark = Color(0xFF2e4a73);
@@ -42,9 +45,151 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isProcessing = false;
+  bool _isLoadingLocation = false;
   int _selectedMethod = 0;
   int _selectedPayment = 0;
   final _addressController = TextEditingController();
+
+  // 📍 FUNGSI AMBIL LOKASI (GPS)
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    setState(() => _isLoadingLocation = true);
+
+    try {
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw 'GPS anda tidak aktif';
+      }
+
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw 'Izin lokasi ditolak';
+        }
+      }
+
+      Position position = await Geolocator.getCurrentPosition();
+      
+      // Ubah koordinat jadi nama kota (Reverse Geocoding)
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude, position.longitude
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        
+        List<String> addressParts = [];
+        String street = place.street ?? '';
+        String name = place.name ?? '';
+        
+        if (street.toLowerCase().contains('unnamed road')) {
+          street = '';
+        }
+        if (name.toLowerCase().contains('unnamed road')) {
+          name = '';
+        }
+        
+        if (street.isNotEmpty) {
+          addressParts.add(street);
+        } else if (name.isNotEmpty) {
+          addressParts.add(name);
+        }
+        
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          addressParts.add(place.subLocality!);
+        }
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          addressParts.add(place.locality!);
+        }
+        if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          addressParts.add(place.subAdministrativeArea!);
+        }
+        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          addressParts.add(place.administrativeArea!);
+        }
+        if (place.postalCode != null && place.postalCode!.isNotEmpty) {
+          addressParts.add(place.postalCode!);
+        }
+        
+        String completeAddress = addressParts.join(', ');
+        
+        setState(() {
+          _addressController.text = completeAddress.isNotEmpty 
+              ? completeAddress 
+              : "${place.locality}, ${place.subAdministrativeArea}";
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal ambil lokasi: $e'), backgroundColor: Colors.redAccent),
+      );
+    } finally {
+      setState(() => _isLoadingLocation = false);
+    }
+  }
+
+  void _selectLocationOption() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pilih Metode Lokasi',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: _textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.my_location, color: _primary),
+                title: const Text('Gunakan Lokasi GPS Saat Ini'),
+                subtitle: const Text('Mengambil lokasi perangkat secara otomatis'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getCurrentLocation();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.map_outlined, color: _primary),
+                title: const Text('Pilih dari Peta'),
+                subtitle: const Text('Tentukan lokasi pengantaran lewat Google Maps'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MapPickerScreen(),
+                    ),
+                  );
+                  if (result != null && result is Map<String, dynamic>) {
+                    setState(() {
+                      _addressController.text = result['address'] ?? '';
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   final List<Map<String, dynamic>> _deliveryMethods = [
     {
@@ -228,10 +373,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
+          Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,25 +552,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: _textPrimary),
                     ),
                     const SizedBox(height: 8),
-                    TextField(
-                      controller: _addressController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'Tuliskan alamat lengkap pengantaran Anda (kos/rumah)...',
-                        hintStyle: const TextStyle(fontSize: 12, color: _textSecondary),
-                        fillColor: Colors.white,
-                        filled: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _accent),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _addressController,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              hintText: 'Tuliskan alamat lengkap pengantaran Anda (kos/rumah)...',
+                              hintStyle: const TextStyle(fontSize: 12, color: _textSecondary),
+                              fillColor: Colors.white,
+                              filled: true,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: _accent),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: const BorderSide(color: _primary),
+                              ),
+                            ),
+                            style: const TextStyle(fontSize: 13, color: _textPrimary),
+                          ),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: _primary),
+                        const SizedBox(width: 10),
+                        IconButton(
+                          onPressed: _selectLocationOption,
+                          icon: const Icon(Icons.pin_drop, color: _primary),
+                          style: IconButton.styleFrom(
+                            backgroundColor: _accent.withOpacity(0.5),
+                          ),
                         ),
-                      ),
-                      style: const TextStyle(fontSize: 13, color: _textPrimary),
+                      ],
                     ),
                   ],
 
@@ -555,6 +717,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
           ),
+            ],
+          ),
+          if (_isLoadingLocation)
+            Container(
+              color: Colors.black26,
+              child: const Center(
+                child: CircularProgressIndicator(color: _primary),
+              ),
+            ),
         ],
       ),
     );

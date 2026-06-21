@@ -32,4 +32,16 @@ class AdminService {
         .from('users')
         .stream(primaryKey: ['id']);
   }
+
+  // 5. Update role pengguna
+  Future<void> updateUserRole(String id, String role) async {
+    try {
+      await SupabaseService.client
+          .from('users')
+          .update({'role': role})
+          .eq('id', id);
+    } catch (e) {
+      // Handle error
+    }
+  }
 }
