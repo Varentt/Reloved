@@ -7,6 +7,7 @@ import 'package:reloved/screens/order_screen.dart';
 import 'package:reloved/screens/profile_screen.dart';
 import 'package:reloved/screens/add_product_screen.dart';
 import 'package:reloved/screens/chat_list_screen.dart';
+import 'package:reloved/screens/favorite_screen.dart';
 
 const _primary = Color(0xFF3B5B8A);
 
@@ -25,6 +26,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const OrderScreen(),
     const ChatListScreen(),
     const ProfileScreen(),
+    const FavoriteScreen(),
   ];
 
   // mapping index navbar ke index _screens
@@ -78,6 +80,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 label: 'Pesanan',
                 isActive: _navIndex == 1,
                 onTap: () => _onItemTapped(1),
+              ),
+              _NavItem(
+                icon: Icons.favorite_border_outlined,
+                activeIcon: Icons.favorite_border,
+                label: 'Favorit',
+                isActive: _navIndex == 5,
+                onTap: () => _onItemTapped(5),
               ),
               // Chat
               myUser == null

@@ -30,6 +30,8 @@ class UserModel {
     );
   }
 
+  String get displayName => name;
+
   // Konversi dari Object ke Map (untuk simpan ke Firestore)
   Map<String, dynamic> toMap() {
     return {

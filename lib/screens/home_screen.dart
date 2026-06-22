@@ -78,6 +78,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Halo, ${user?.displayName ?? 'Pengguna'}',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 255, 255, 255),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       const Spacer(),
                       _topIconBtn(Icons.favorite_border, () {
                         Navigator.push(
